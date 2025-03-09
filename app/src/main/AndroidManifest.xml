@@ -14,10 +14,10 @@
         android:name="android.hardware.camera.autofocus"
         android:required="false" />
 
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CAMERA" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"/>
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
@@ -36,7 +36,7 @@
             android:name="com.example.nutcracker_streaming_app.StreamingService"
             android:enabled="true"
             android:exported="false"
-            android:foregroundServiceType="camera|microphone">
+            android:foregroundServiceType="camera|microphone|mediaPlayback">
 
         </service>
         <!-- <service android:name=".services.YourScreenRecorderService" android:exported="false" -->

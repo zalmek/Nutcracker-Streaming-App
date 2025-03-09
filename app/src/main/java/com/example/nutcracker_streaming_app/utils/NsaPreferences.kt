@@ -34,11 +34,24 @@ object NsaPreferences {
         ).orEmpty())
         set(value) = pref().edit().putString(getPrefName(Prefs.SrtLink), value.toString()).apply()
 
+    var bitrateRange: Option.Bitrate
+        get() = pref().getString(
+            getPrefName(Prefs.Bitrate), getPrefDefault(Prefs.Bitrate)
+        ).orEmpty().toBitrate()
+        set(value) = pref().edit().putString(getPrefName(Prefs.Bitrate), value.toString()).apply()
+
+
     var resolution: Option.Resolution
         get() = pref().getString(
             getPrefName(Prefs.Resolution), getPrefDefault(Prefs.Resolution)
         ).orEmpty().toResolution()
         set(value) = pref().edit().putString(getPrefName(Prefs.Resolution), value.toString()).apply()
+
+    var framerate: Option.Framerate
+        get() = pref().getString(
+            getPrefName(Prefs.Framerate), getPrefDefault(Prefs.Framerate)
+        ).orEmpty().toFramerate()
+        set(value) = pref().edit().putString(getPrefName(Prefs.Framerate), value.toString()).apply()
 
     var audioEncoder: Option.AudioEncoder
         get() = Option.AudioEncoder(pref().getString(
@@ -68,6 +81,8 @@ object NsaPreferences {
             Prefs.RtmpLink -> appContext.getString(R.string.pref_name_rtmp_stream_link_key)
             Prefs.SrtLink -> appContext.getString(R.string.pref_name_srt_stream_link_key)
             Prefs.Protocol -> appContext.getString(R.string.pref_name_protocol)
+            Prefs.Framerate -> appContext.getString(R.string.pref_name_framerate)
+            Prefs.Bitrate -> appContext.getString(R.string.pref_name_bitrate)
         }
     }
 
@@ -79,6 +94,8 @@ object NsaPreferences {
             Prefs.RtmpLink -> ""
             Prefs.SrtLink -> ""
             Prefs.Protocol -> "rtmp"
+            Prefs.Framerate -> "30-30"
+            Prefs.Bitrate -> "1000-10000"
         }
     }
 }
@@ -86,6 +103,8 @@ object NsaPreferences {
 
 
 sealed class Prefs {
+    data object Bitrate: Prefs()
+    data object Framerate: Prefs()
     data object Resolution : Prefs()
     data object AudioEncoder: Prefs()
     data object VideoEncoder: Prefs()

@@ -11,7 +11,6 @@ import android.os.Binder
 import android.os.IBinder
 import android.util.Log
 import android.view.Surface
-import android.widget.Toast
 import androidx.core.app.NotificationCompat
 import com.example.nutcracker_streaming_app.utils.NsaPreferences
 import com.example.nutcracker_streaming_app.utils.NsaPreferences.NOTIFICATION_CHANNEL_ID
@@ -26,7 +25,9 @@ import io.github.thibaultbee.streampack.ext.srt.streamers.CameraSrtLiveStreamer
 import io.github.thibaultbee.streampack.listeners.OnConnectionListener
 import io.github.thibaultbee.streampack.listeners.OnErrorListener
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 
 class StreamingService : Service() {
@@ -34,8 +35,8 @@ class StreamingService : Service() {
     private val streamer get() = streamerManager.getLiveStreamer()
     private var surfaceView: Surface? = null
     private val coroutineScope = CoroutineScope(Dispatchers.IO)
-    private val srtLink = NsaPreferences.srtLink.toString()
-    private val rtmpLink = NsaPreferences.rtmpLink.toString()
+    private val srtLink get() = NsaPreferences.srtLink.toString()
+    private val rtmpLink get() = NsaPreferences.rtmpLink.toString()
     private val binder = LocalBinder()
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -48,8 +49,8 @@ class StreamingService : Service() {
             NotificationManager.IMPORTANCE_LOW
         )
         notificationManager.createNotificationChannel(channel)
-
-        val pendingIntent: PendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_IMMUTABLE)
+        val notificationIntent = Intent(this, MainActivity::class.java)
+        val pendingIntent: PendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, PendingIntent.FLAG_IMMUTABLE)
 
         val builder = NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
             .setContentTitle("My notification")
@@ -57,10 +58,10 @@ class StreamingService : Service() {
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             // Set the intent that fires when the user taps the notification.
             .setContentIntent(pendingIntent)
-            .setAutoCancel(true)
+            .setAutoCancel(false)
 
 
-        startForeground(1, builder.build())
+        startForeground(1, builder.build(),)
         return super.onStartCommand(intent, flags, startId)
     }
 
@@ -77,7 +78,7 @@ class StreamingService : Service() {
 
     private val onConnectionListener = object : OnConnectionListener {
         override fun onLost(message: String) {
-            Log.w("ZALMEK", "Connection succeeded")
+            Log.w("ZALMEK", "Connection lost")
         }
 
         override fun onFailed(message: String) {
@@ -113,8 +114,8 @@ class StreamingService : Service() {
     }
 
     @SuppressLint("MissingPermission")
-    fun startStream(protocol: Option.Protocol = NsaPreferences.protocol) {
-        coroutineScope.launch {
+    suspend fun startStream(protocol: Option.Protocol = NsaPreferences.protocol): Deferred<Boolean?> {
+        return coroutineScope.async {
             streamerManager.rebuildStreamer()
             streamerManager.onErrorListener = onErrorListener
             streamerManager.onConnectionListener = onConnectionListener
@@ -125,24 +126,31 @@ class StreamingService : Service() {
                             (streamer as CameraRtmpLiveStreamer).startPreview(it, (streamer as CameraRtmpLiveStreamer).camera,)
                             Log.d("LOGLINK", "startStream: $ $rtmpLink")
                             (streamer as CameraRtmpLiveStreamer).startStream(rtmpLink)
-
+                            return@async true
                         } catch (e: Exception) {
-                            Toast.makeText(applicationContext, "При попытке начать стрим произошла ошибка", Toast.LENGTH_SHORT)
+                            Log.d("LOGLINK", "При попытке начать стрим произошла ошибка ${e.message}",)
+                            return@async false
                         }
                     }
                 }
                 Option.Protocol.Srt -> {
                     surfaceView?.let {
                         try {
-                            (streamer as CameraSrtLiveStreamer).startPreview(it, (streamer as CameraSrtLiveStreamer).camera)
-                            (streamer as CameraSrtLiveStreamer).startStream(
-                                SrtConnectionDescriptor.fromUrlAndParameters(
-                                    url = srtLink,
-                                    streamId = srtLink.split(applicationContext.getString(R.string.stremaid_param))[1]
-                                )
+                            (streamer as CameraSrtLiveStreamer).startPreview(
+                                it,
+                                (streamer as CameraSrtLiveStreamer).camera
                             )
+                            val link = SrtConnectionDescriptor.fromUrlAndParameters(
+                                url = srtLink,
+                                streamId = srtLink.split(applicationContext.getString(R.string.stremaid_param))[1]
+                            )
+                            Log.d("LOGLINK:", "startStream: $link")
+                            (streamer as CameraSrtLiveStreamer).startStream(link)
+                            return@async true
                         } catch (e: Exception) {
-                            Toast.makeText(applicationContext, "При попытке начать стрим произошла ошибка", Toast.LENGTH_SHORT) }
+                            Log.d("LOGLINK", "При попытке начать стрим произошла ошибка ${e.message}",)
+                            return@async false
+                        }
                     }
                 }
             }
