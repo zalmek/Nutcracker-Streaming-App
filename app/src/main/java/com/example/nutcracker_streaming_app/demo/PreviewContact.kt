@@ -5,7 +5,7 @@ import com.example.nutcracker_streaming_app.presentetion.base.ViewEvent
 import com.example.nutcracker_streaming_app.presentetion.base.ViewSideEffect
 import com.example.nutcracker_streaming_app.presentetion.base.ViewState
 
-class DemoContact {
+class PreviewContact {
     sealed class Event: ViewEvent {
         data class SelectProtocol(val protocol: Protocol): Event()
         data class InputLink(val link: String): Event()

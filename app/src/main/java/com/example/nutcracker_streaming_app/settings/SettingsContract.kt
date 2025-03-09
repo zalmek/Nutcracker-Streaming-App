@@ -13,6 +13,7 @@ class SettingsContract {
         data class SelectResolution(val resolution: Option.Resolution) : Event()
         data class SelectFramerate(val framerate: Option.Framerate) : Event()
         data class SelectProtocol(val protocol: Option.Protocol): Event()
+        data class InputBitrate(val bitrateRange: Option.Bitrate): Event()
         data class InputSrtLink(val srtLink: Option.Link.SrtLink) : Event()
         data class InputRtmpLink(val rtmpLink: Option.Link.RtmpLink) : Event()
         data class SelectAudioEncoder(val audioEncoder: Option.AudioEncoder): Event()
@@ -20,6 +21,7 @@ class SettingsContract {
     }
 
     data class State(
+        val bitrateRange: Option.Bitrate,
         val protocol: Option.Protocol,
         val videoEncoder: Option.VideoEncoder,
         val audioEncoder: Option.AudioEncoder,

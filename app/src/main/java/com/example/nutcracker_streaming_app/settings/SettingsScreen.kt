@@ -1,6 +1,7 @@
 package com.example.nutcracker_streaming_app.settings
 
 import android.annotation.SuppressLint
+import android.util.Range
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -18,6 +19,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.Card
@@ -25,6 +27,8 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.RadioButtonDefaults
 import androidx.compose.material3.Text
@@ -32,15 +36,19 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -99,11 +107,9 @@ fun SettingsScreen(
                 modifier = Modifier
                     .align(Alignment.CenterVertically)
                     .size(30.dp)
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
+                    .clickable(interactionSource = remember { MutableInteractionSource() },
                         indication = null,
-                        onClick = { navController.popBackStack() }
-                    ),
+                        onClick = { navController.popBackStack() }),
                 painter = painterResource(R.drawable.ic_close_24),
                 tint = Colors.Icons.primary,
                 contentDescription = null,
@@ -120,17 +126,40 @@ fun SettingsScreen(
         SettingItem(
             setEvent = viewModel::setEvent,
             currentOption = viewModel.viewState.value.resolution,
-            options = viewModel.viewState.value.supportedStates.supportedResolutions.map { it.toResolution() }.toPersistentList()
+            options = viewModel.viewState.value.supportedStates.supportedResolutions.map { it.toResolution() }
+                .toPersistentList()
+        )
+        SettingItem(
+            setEvent = viewModel::setEvent,
+            currentOption = viewModel.viewState.value.framerate,
+            options = viewModel.viewState.value.supportedStates.supportedFramerates.map {
+                Option.Framerate(
+                    it
+                )
+            }.toPersistentList()
+        )
+        BitrateItem(
+            setEvent = viewModel::setEvent,
+            currentOption = viewModel.viewState.value.bitrateRange,
+            bitrateAvailableRange = viewModel.viewState.value.supportedStates.supportedBitrates
         )
         SettingItem(
             setEvent = viewModel::setEvent,
             currentOption = viewModel.viewState.value.audioEncoder,
-            options = viewModel.viewState.value.supportedStates.supportedAudioEncoder.map { Option.AudioEncoder(it) }.toPersistentList()
+            options = viewModel.viewState.value.supportedStates.supportedAudioEncoder.map {
+                Option.AudioEncoder(
+                    it
+                )
+            }.toPersistentList()
         )
         SettingItem(
             setEvent = viewModel::setEvent,
             currentOption = viewModel.viewState.value.videoEncoder,
-            options = viewModel.viewState.value.supportedStates.supportedVideoEncoder.map { Option.AudioEncoder(it) }.toPersistentList()
+            options = viewModel.viewState.value.supportedStates.supportedVideoEncoder.map {
+                Option.VideoEncoder(
+                    it
+                )
+            }.toPersistentList()
         )
         SettingItem(
             setEvent = viewModel::setEvent,
@@ -138,15 +167,6 @@ fun SettingsScreen(
             options = protocols.toPersistentList()
         )
     }
-}
-
-@Composable
-fun StreamLink(
-    state: Option.Link,
-    setEvent: (SettingsContract.Event) -> Unit,
-) {
-    val openAlertDialog = remember { mutableStateOf(false) }
-    SettingRow(currentOption = state, openAlertDialog)
 }
 
 @Composable
@@ -158,7 +178,8 @@ private fun event(option: Option): SettingsContract.Event {
         is Option.Resolution -> SettingsContract.Event.SelectResolution(option)
         is Option.AudioEncoder -> SettingsContract.Event.SelectAudioEncoder(option)
         is Option.VideoEncoder -> SettingsContract.Event.SelectVideoEncoder(option)
-        is Option.Protocol -> SettingsContract.Event.SelectProtocol(protocol = option)
+        is Option.Protocol -> SettingsContract.Event.SelectProtocol(option)
+        is Option.Bitrate -> SettingsContract.Event.InputBitrate(option)
     }
 }
 
@@ -172,6 +193,32 @@ private fun title(option: Option): String {
         is Option.AudioEncoder -> stringResource(R.string.audio_encoder)
         is Option.VideoEncoder -> stringResource(R.string.video_encoder)
         is Option.Protocol -> stringResource(R.string.stream_protocol)
+        is Option.Bitrate -> stringResource(R.string.stream_bitrate)
+    }
+}
+
+@Composable
+fun StreamLink(
+    state: Option.Link,
+    setEvent: (SettingsContract.Event) -> Unit,
+) {
+    val openAlertDialog = remember { mutableStateOf(false) }
+    SettingRow(currentOption = state, openAlertDialog)
+    if (openAlertDialog.value) {
+        InputDialog(openAlertDialog, state, setEvent)
+    }
+}
+
+@Composable
+fun BitrateItem(
+    currentOption: Option.Bitrate,
+    bitrateAvailableRange: Range<Int>,
+    setEvent: (SettingsContract.Event) -> Unit,
+) {
+    val openAlertDialog = remember { mutableStateOf(false) }
+    SettingRow(currentOption = currentOption, openAlertDialog)
+    if (openAlertDialog.value) {
+        BitrateDialog(openAlertDialog, currentOption, bitrateAvailableRange, setEvent)
     }
 }
 
@@ -202,11 +249,9 @@ private fun SettingRow(
     Row(
         modifier = Modifier
             .background(Colors.Background.row)
-            .clickable(
-                interactionSource = interactionSource,
+            .clickable(interactionSource = interactionSource,
                 indication = rememberRipple(color = Colors.Utility.ripple),
-                onClick = { openAlertDialog.value = true }
-            )
+                onClick = { openAlertDialog.value = true })
             .fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Absolute.SpaceBetween
@@ -280,6 +325,84 @@ private fun PreviewSettingDialog() {
                 Option.Resolution(2560, 1440),
             ),
         ) { }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun InputDialog(
+    openAlertDialog: MutableState<Boolean>,
+    currentOption: Option,
+    onOptionEntered: (SettingsContract.Event) -> Unit
+) {
+    var text by remember { mutableStateOf(currentOption.toString()) }
+    val event = when (currentOption) {
+        is Option.Link.RtmpLink -> event(Option.Link.RtmpLink(text))
+        is Option.Link.SrtLink -> event(Option.Link.SrtLink(text))
+        else -> SettingsContract.Event.Refresh
+    }
+    BasicAlertDialog(
+        onDismissRequest = { openAlertDialog.value = false },
+    ) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = Colors.Background.dialog)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(24.dp, 24.dp, 24.dp),
+                horizontalAlignment = Alignment.Start,
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Text(
+                    text = title(currentOption),
+                    color = Colors.Text.primary,
+                    fontFamily = Fonts.robotoFamily,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.SemiBold,
+                )
+                HorizontalDivider()
+                OutlinedTextField(
+                    value = text,
+                    onValueChange = { text = it },
+                    textStyle = TextStyle(
+                        color = Colors.Text.primary,
+                        fontFamily = Fonts.robotoFamily,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Normal,
+                    ),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        cursorColor = Colors.Text.action,
+                        focusedBorderColor = Colors.Text.action
+                    )
+                )
+                HorizontalDivider()
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 16.dp),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    TextButton(
+                        onClick = {
+                            openAlertDialog.value = false
+                            onOptionEntered(event)
+                        },
+                    ) {
+                        Text(
+                            text = stringResource(R.string.save),
+                            fontFamily = Fonts.robotoFamily,
+                            fontSize = 16.sp,
+                            color = Colors.Text.action
+                        )
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -366,6 +489,106 @@ private fun SettingDialog(
                 ) {
                     TextButton(
                         onClick = { openAlertDialog.value = false },
+                    ) {
+                        Text(
+                            text = stringResource(R.string.save),
+                            fontFamily = Fonts.robotoFamily,
+                            fontSize = 16.sp,
+                            color = Colors.Text.action
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun BitrateDialog(
+    openAlertDialog: MutableState<Boolean>,
+    currentOption: Option.Bitrate,
+    bitrateAvailableRange: Range<Int>,
+    onOptionEntered: (SettingsContract.Event) -> Unit
+) {
+    var text by remember { mutableStateOf(currentOption.range.lower.toString()) }
+    val event = event(
+        Option.Bitrate(
+            Range(
+                maxOf(
+                    bitrateAvailableRange.lower,
+                    minOf(text.toIntOrNull() ?: bitrateAvailableRange.lower, bitrateAvailableRange.upper)
+                ),
+                minOf(
+                    bitrateAvailableRange.upper,
+                    maxOf(text.toIntOrNull() ?: bitrateAvailableRange.upper, bitrateAvailableRange.lower)
+                )
+            )
+        )
+    )
+    BasicAlertDialog(
+        onDismissRequest = { openAlertDialog.value = false },
+    ) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = Colors.Background.dialog)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(24.dp, 24.dp, 24.dp),
+                horizontalAlignment = Alignment.Start,
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Text(
+                    text = title(currentOption),
+                    color = Colors.Text.primary,
+                    fontFamily = Fonts.robotoFamily,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.SemiBold,
+                )
+                HorizontalDivider()
+                Row {
+                    OutlinedTextField(
+                        value = text,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        supportingText = {
+                            Text(
+                                stringResource(
+                                    R.string.bitrate_supported_placeholder,
+                                    bitrateAvailableRange.lower,
+                                    bitrateAvailableRange.upper
+                                )
+                            )
+                        },
+                        onValueChange = { text = it },
+                        textStyle = TextStyle(
+                            color = Colors.Text.primary,
+                            fontFamily = Fonts.robotoFamily,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Normal,
+                        ),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            cursorColor = Colors.Text.action,
+                            focusedBorderColor = Colors.Text.action
+                        )
+                    )
+                }
+                HorizontalDivider()
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 16.dp),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    TextButton(
+                        onClick = {
+                            openAlertDialog.value = false
+                            onOptionEntered(event)
+                        },
                     ) {
                         Text(
                             text = stringResource(R.string.save),

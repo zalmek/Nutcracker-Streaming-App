@@ -50,6 +50,8 @@ object StreamerHelper {
     fun configureStreamer(streamer: BaseCameraLiveStreamer) {
         val videoConfig = VideoConfig(
             resolution = NsaPreferences.resolution.toSize(),
+            fps = NsaPreferences.framerate.range.upper,
+            startBitrate = NsaPreferences.bitrateRange.range.lower,
 //            mimeType = NsaPreferences.videoEncoder.mediaFormat
         )
 
@@ -132,6 +134,13 @@ object StreamerHelper {
 @Stable
 sealed class Option {
     @Stable
+    data class Bitrate(val range: Range<Int>): Option() {
+        override fun toString(): String {
+            return "${range.lower}-${range.upper}"
+        }
+    }
+
+    @Stable
     sealed class Protocol: Option() {
         data object Srt: Protocol() {
             const val PROTOCOL = "srt"
@@ -183,12 +192,14 @@ sealed class Option {
         }
     }
 
-    sealed class Framerate : Option() {
-        data object Fps15 : Framerate()
-        data object Fps30 : Framerate()
-        data object Fps60 : Framerate()
+    @Stable
+    data class Framerate(val range: Range<Int>) : Option() {
+//        sealed class Variable(start: Int, end: Int) : Framerate(Range(start, end))
+//        sealed class Constant(framerate: Int) : Framerate(Range(framerate, framerate))
+        override fun toString(): String {
+            return "${range.lower}-${range.upper}"
+        }
     }
-
 }
 
 internal fun Size.toResolution(): Option.Resolution {
@@ -202,4 +213,14 @@ internal fun Option.Resolution.toSize(): Size {
 internal fun String.toResolution(): Option.Resolution {
     val (width, height) = this.split("x").map { it.toInt() }
     return Option.Resolution(width, height)
+}
+
+internal fun String.toFramerate(): Option.Framerate {
+    val (start, end) = this.split("-").map { it.toInt() }
+    return Option.Framerate(Range(start, end))
+}
+
+internal fun String.toBitrate(): Option.Bitrate {
+    val (start, end) = this.split("-").map { it.toInt() }
+    return Option.Bitrate(Range(start, end))
 }
