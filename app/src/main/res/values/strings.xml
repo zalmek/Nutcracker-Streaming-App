@@ -1,4 +1,32 @@
 <resources>
     <string name="app_name">NutcrackerStreamingApp</string>
     <string name="camara_per">CAMARA_PER</string>
+    <string name="default_preference_name">Default</string>
+    <string name="pref_name_resolution">Resolution</string>
+    <string name="pref_default_resolution">1280x720</string>
+    <string name="stream_resolution">Разрешение стрима</string>
+    <string name="framerate">Кадров в секунду(FPS)</string>
+    <string name="pref_name_audio_encoder">audioEncoder</string>
+    <string name="pref_name_video_encoder">videoEncoder</string>
+    <string name="audio_encoder">Кодировщик аудио</string>
+    <string name="video_encoder">Кодировщик видео</string>
+    <string name="pref_name_rtmp_stream_link_key">rtmp_stream_link_key</string>
+    <string name="pref_name_srt_stream_link_key">srt_stream_link_key</string>
+    <string name="settings">Настройки</string>
+    <string name="error_incorrect_stream_key">Некорректный ключ стрима. Данный протокол не поддерживается</string>
+    <string name="stremaid_param">streamid=</string>
+    <string name="start_stream">Начать стрим</string>
+    <string name="stop_stream">Закончить стрим</string>
+    <string name="permission_title">Необходимы разрешения</string>
+    <string name="permission_desc">Для дальнейшей работы, приложению необходимо получить доступ к камере и микрофону вашего устройства. Без этих разрешений вы не сможете транслировать аудио и видео при помощи вашего сматрфона.</string>
+    <string name="start_preview">Включить превью</string>
+    <string name="pref_name_protocol">protocol</string>
+    <string name="stream_protocol">Протокол стрима</string>
+    <string name="save">Сохранить</string>
+    <string name="camera">Камера</string>
+    <string name="microphone">Микрофон</string>
+    <string name="ask_permission">Запросить</string>
+    <string name="permision_notifications">Уведомления</string>
+    <string name="srt_url">Srt Url</string>
+    <string name="rtmp_url">RTMP url</string>
 </resources>

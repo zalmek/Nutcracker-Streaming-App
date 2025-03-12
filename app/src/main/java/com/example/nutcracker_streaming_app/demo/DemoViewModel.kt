@@ -1,8 +1,7 @@
-package com.example.nutcracker_streaming_app.DemoScreen
+package com.example.nutcracker_streaming_app.demo
 
-import android.util.Log
-import com.example.nutcracker_streaming_app.utils.Protocol
 import com.example.nutcracker_streaming_app.presentetion.base.BaseViewModel
+import com.example.nutcracker_streaming_app.utils.Protocol
 
 class DemoViewModel: BaseViewModel<DemoContact.Event, DemoContact.State, DemoContact.Effect>() {
 
@@ -15,14 +14,12 @@ class DemoViewModel: BaseViewModel<DemoContact.Event, DemoContact.State, DemoCon
             is DemoContact.Event.SelectProtocol -> setState {
                 val state = this as DemoContact.State.Main
                 val newState = state.copy(protocol = event.protocol)
-                Log.d("asdasdsd", "handleEvents:${state.protocol} ${newState.protocol} ")
                 newState
             }
 
             is DemoContact.Event.InputLink -> setState {
                 val state = this as DemoContact.State.Main
                 val newState = state.copy(link = event.link)
-                Log.d("asdasdsd", "handleEvents:${state.link} ${newState.link} ")
                 newState
             }
         }

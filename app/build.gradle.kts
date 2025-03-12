@@ -1,7 +1,10 @@
+import com.android.build.gradle.internal.cxx.configure.gradleLocalProperties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
     alias(libs.plugins.jetbrains.kotlinserialization)
+    id("kotlin-kapt")
 }
 
 android {
@@ -10,7 +13,7 @@ android {
 
     defaultConfig {
         applicationId = "com.example.nutcrackerstreamingapp"
-        minSdk = 24
+        minSdk = 26
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
@@ -21,15 +24,36 @@ android {
         }
     }
 
-    buildTypes {
-        release {
-            isMinifyEnabled = false
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
+    signingConfigs {
+        create("release") {
+            storeFile = file("/Users/d.tolstolutskiy/nutcracker")
+            storePassword = gradleLocalProperties(rootDir, providers).getProperty("keystore_password").toString()
+            keyAlias = gradleLocalProperties(rootDir, providers).getProperty("key_alias").toString()
+            keyPassword = gradleLocalProperties(rootDir, providers).getProperty("key_password").toString()
+
         }
     }
+
+    buildTypes {
+        release {
+            isMinifyEnabled = true
+
+            // Enables resource shrinking, which is performed by the
+            // Android Gradle plugin.
+            isShrinkResources = true
+            proguardFiles(
+                // Includes the default ProGuard rules files that are packaged with
+                // the Android Gradle plugin. To learn more, go to the section about
+                // R8 configuration files.
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+
+                // Includes a local, custom Proguard rules file
+                "proguard-rules.pro"
+            )
+            signingConfig = signingConfigs.getByName("release")
+        }
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
@@ -47,24 +71,30 @@ android {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
-    }
-    packagingOptions {
-        pickFirst("**/*.so")
+        jniLibs {
+            pickFirsts += setOf("**/*.so")
+        }
     }
 }
 
 dependencies {
+    implementation(libs.accompanist.permissions)
     // Camera plugin
-    implementation(libs.camerak)
+    implementation (libs.camera.core)
+    implementation (libs.androidx.camera.camera2)
+    implementation (libs.androidx.camera.view)
+    implementation (libs.androidx.camera.lifecycle)
     implementation(libs.qr.scanner.plugin)
+    implementation(libs.androidx.ui.text.google.fonts)
 
     // Streaming
     implementation (libs.streampack)
     // For RTMP
     implementation (libs.streampack.extension.rtmp)
+    implementation(libs.kotlinx.collections.immutable)
     // For SRT
     implementation (libs.streampack.extension.srt)
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
+    implementation(libs.kotlinx.serialization.json)
     implementation(libs.converter.gson)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.retrofit)
@@ -83,4 +113,8 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+}
+
+kapt {
+    correctErrorTypes = true
 }

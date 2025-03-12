@@ -1,0 +1,205 @@
+package com.example.nutcracker_streaming_app.utils
+
+import android.annotation.SuppressLint
+import android.content.Context
+import android.util.Range
+import android.util.Size
+import androidx.compose.runtime.Stable
+import com.example.nutcracker_streaming_app.settings.SettingsContract
+import io.github.thibaultbee.streampack.data.AudioConfig
+import io.github.thibaultbee.streampack.data.VideoConfig
+import io.github.thibaultbee.streampack.ext.rtmp.streamers.CameraRtmpLiveStreamer
+import io.github.thibaultbee.streampack.ext.srt.streamers.CameraSrtLiveStreamer
+import io.github.thibaultbee.streampack.streamers.live.BaseCameraLiveStreamer
+import io.github.thibaultbee.streampack.utils.defaultCameraId
+
+object StreamerHelper {
+    lateinit var supportedVideoEncoder: List<String>
+    lateinit var audioEncoder: String
+    lateinit var videoEncoder: String
+    lateinit var inputChannelRange: Range<Int>
+    lateinit var bitrateRange: Range<Int>
+    lateinit var sampleRates: List<Int>
+    lateinit var supportedAudioEncoder: List<String>
+    lateinit var byteFormats: List<Int>
+    lateinit var supportedResolutions: List<Size>
+    lateinit var supportedFramerates: List<Range<Int>>
+    lateinit var supportedBitrates: Range<Int>
+//    lateinit var getSupportedAllProfiles: List<Int>
+    lateinit var profiles: List<Int>
+
+    fun init(context: Context) {
+        getSrtStreamer(context, false)
+    }
+
+    fun getSrtStreamer(context: Context, needToConfig: Boolean = true): CameraSrtLiveStreamer {
+        val srtLiveStreamer = CameraSrtLiveStreamer(context = context)
+        refreshSettings(srtLiveStreamer, context)
+        if (needToConfig) configureStreamer(srtLiveStreamer)
+        return srtLiveStreamer
+    }
+
+    fun getRtmpStreamer(context: Context): CameraRtmpLiveStreamer {
+        val rtmpLiveStreamer = CameraRtmpLiveStreamer(context = context)
+        refreshSettings(rtmpLiveStreamer, context)
+        configureStreamer(rtmpLiveStreamer)
+        return rtmpLiveStreamer
+    }
+
+    @SuppressLint("MissingPermission")
+    fun configureStreamer(streamer: BaseCameraLiveStreamer) {
+        val videoConfig = VideoConfig(
+            resolution = NsaPreferences.resolution.toSize(),
+//            mimeType = NsaPreferences.videoEncoder.mediaFormat
+        )
+
+        val audioConfig = AudioConfig(
+//            mimeType = NsaPreferences.audioEncoder.mediaFormat
+        )
+
+        streamer.configure(audioConfig, videoConfig)
+    }
+
+    fun refreshSettings(
+        streamer: BaseCameraLiveStreamer,
+        context: Context
+    ) {
+        // Inflates video encoders
+        supportedVideoEncoder = streamer.helper.video.supportedEncoders
+
+        // AudioEncoders
+        supportedAudioEncoder = streamer.helper.audio.supportedEncoders
+
+        audioEncoder = supportedAudioEncoder[0]
+
+        videoEncoder = supportedVideoEncoder[0]
+
+        // Inflates audio number of channel
+        inputChannelRange = streamer.helper.audio.getSupportedInputChannelRange(audioEncoder)
+
+        // Inflates audio bitrate
+        bitrateRange = streamer.helper.audio.getSupportedBitrates(audioEncoder)
+
+        // Inflates audio sample rate
+        sampleRates = streamer.helper.audio.getSupportedSampleRates(audioEncoder)
+
+        // Inflates audio byte format
+        byteFormats = streamer.helper.audio.getSupportedByteFormats()
+
+        // Inflates video resolutions
+        supportedResolutions = streamer.helper.video.getSupportedResolutions(
+            context,
+            videoEncoder
+        )
+
+        // Inflates video fps
+        supportedFramerates = streamer.helper.video.getSupportedFramerates(
+            context,
+            videoEncoder,
+            context.defaultCameraId
+        )
+
+        // Inflates video bitrate
+        supportedBitrates = streamer.helper.video.getSupportedBitrates(videoEncoder)
+
+        // Inflates profile
+        profiles = streamer.helper.video.getSupportedAllProfiles(
+            context,
+            videoEncoder,
+            context.defaultCameraId
+        ).map { it }
+    }
+
+    fun getSupportedStates(): SettingsContract.SupportedStates {
+        return SettingsContract.SupportedStates(
+            supportedVideoEncoder,
+            audioEncoder,
+            videoEncoder,
+            inputChannelRange,
+            bitrateRange,
+            sampleRates,
+            supportedAudioEncoder,
+            byteFormats,
+            supportedResolutions,
+            supportedFramerates,
+            supportedBitrates,
+//        var getSupportedAllProfiles: ,
+            profiles,
+        )
+    }
+}
+
+@Stable
+sealed class Option {
+    @Stable
+    sealed class Protocol: Option() {
+        data object Srt: Protocol() {
+            const val PROTOCOL = "srt"
+            override fun toString(): String {
+                return PROTOCOL
+            }
+        }
+        data object Rtmp: Protocol() {
+            const val PROTOCOL = "rtmp"
+            override fun toString(): String {
+                return PROTOCOL
+            }
+        }
+    }
+
+    @Stable
+    data class VideoEncoder(val mediaFormat: String) : Option() {
+        override fun toString(): String {
+            return mediaFormat
+        }
+    }
+
+    @Stable
+    data class AudioEncoder(val mediaFormat: String) : Option() {
+        override fun toString(): String {
+            return mediaFormat
+        }
+    }
+
+    @Stable
+    sealed class Link(val text: String) : Option() {
+        data class SrtLink(val srtLink: String): Link(srtLink) {
+            override fun toString(): String {
+                return srtLink
+            }
+        }
+        data class RtmpLink(val rtmpLink: String): Link(rtmpLink) {
+            override fun toString(): String {
+                return rtmpLink
+            }
+        }
+
+    }
+
+    @Stable
+    data class Resolution(val width: Int, val height: Int) : Option() {
+        override fun toString(): String {
+            return "${width}x${height}"
+        }
+    }
+
+    sealed class Framerate : Option() {
+        data object Fps15 : Framerate()
+        data object Fps30 : Framerate()
+        data object Fps60 : Framerate()
+    }
+
+}
+
+internal fun Size.toResolution(): Option.Resolution {
+    return Option.Resolution(this.width, this.height)
+}
+
+internal fun Option.Resolution.toSize(): Size {
+    return Size(this.width, this.height)
+}
+
+internal fun String.toResolution(): Option.Resolution {
+    val (width, height) = this.split("x").map { it.toInt() }
+    return Option.Resolution(width, height)
+}

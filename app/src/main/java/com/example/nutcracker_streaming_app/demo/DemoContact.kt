@@ -1,4 +1,4 @@
-package com.example.nutcracker_streaming_app.DemoScreen
+package com.example.nutcracker_streaming_app.demo
 
 import com.example.nutcracker_streaming_app.utils.Protocol
 import com.example.nutcracker_streaming_app.presentetion.base.ViewEvent
