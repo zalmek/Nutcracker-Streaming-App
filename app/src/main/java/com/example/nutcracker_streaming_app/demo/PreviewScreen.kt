@@ -40,15 +40,15 @@ import androidx.navigation.NavController
 import com.example.nutcracker_streaming_app.StreamingService
 import com.example.nutcracker_streaming_app.ui.theme.Colors
 import com.example.nutcracker_streaming_app.utils.Routes
-import com.example.nutcracker_streaming_app.utils.rememberStreamingService
 import com.example.nutcrackerstreamingapp.R
 import kotlinx.coroutines.launch
 
 
 @SuppressLint("MissingPermission")
 @Composable
-fun DemoScreen(
+fun PreviewScreen(
     navController: NavController,
+    streamingService: StreamingService?
 ) {
     val activity = LocalContext.current as Activity
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -63,12 +63,15 @@ fun DemoScreen(
     var streamActive by remember {
         mutableStateOf(false)
     }
-    val streamingService =
-        rememberStreamingService<StreamingService, StreamingService.LocalBinder> { service }
-    LaunchedEffect(Unit) {
-        activity.startForegroundService(Intent(activity, StreamingService::class.java))
-        streamActive = false
-        activity.window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+
+    LaunchedEffect(streamingService) {
+        if (streamingService == null) {
+            activity.startForegroundService(Intent(activity, StreamingService::class.java))
+            streamActive = false
+            activity.window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        } else {
+            streamingService.provideSurface(surfaceView)
+        }
     }
     LaunchedEffect(streamingService, surfaceView) {
         streamingService?.provideSurface(surfaceView)
@@ -108,7 +111,7 @@ fun DemoScreen(
         Icon(
             painter = painterResource(R.drawable.ic_settings_40),
             contentDescription = null,
-            tint = Color.Gray,
+            tint = Color.White,
             modifier = Modifier
                 .align(Alignment.TopEnd)
                 .clickable(

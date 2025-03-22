@@ -23,7 +23,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.nutcracker_streaming_app.demo.DemoScreen
+import com.example.nutcracker_streaming_app.demo.PreviewScreen
 import com.example.nutcracker_streaming_app.network.QrResponse
 import com.example.nutcracker_streaming_app.permissions.PermissionScreen
 import com.example.nutcracker_streaming_app.settings.SettingsScreen
@@ -32,6 +32,7 @@ import com.example.nutcracker_streaming_app.ui.theme.Colors
 import com.example.nutcracker_streaming_app.utils.NsaPreferences
 import com.example.nutcracker_streaming_app.utils.Option
 import com.example.nutcracker_streaming_app.utils.Routes
+import com.example.nutcracker_streaming_app.utils.rememberStreamingService
 import com.google.gson.Gson
 import kotlinx.coroutines.CoroutineExceptionHandler
 import okhttp3.Call
@@ -76,13 +77,14 @@ fun MyAppNavHost(
     navController: NavHostController = rememberNavController(),
 ) {
     lateinit var settingsViewModel: SettingsViewModel
+    val streamingService = rememberStreamingService<StreamingService, StreamingService.LocalBinder> { service }
     NavHost(
         modifier = modifier,
         navController = navController,
         startDestination = Routes.PermissionsScreen
     ) {
         composable<Routes.MainScreen> {
-            DemoScreen(navController = navController)
+            PreviewScreen(navController = navController, streamingService)
         }
         composable<Routes.SettingsScreen> { backStackEntry ->
             settingsViewModel = viewModel<SettingsViewModel>()

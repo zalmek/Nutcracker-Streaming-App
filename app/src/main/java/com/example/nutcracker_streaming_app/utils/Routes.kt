@@ -1,4 +1,4 @@
-package com.example.nutcracker_streaming_app.Utils
+package com.example.nutcracker_streaming_app.utils
 
 import kotlinx.serialization.Serializable
 
@@ -8,6 +8,8 @@ sealed class Routes {
     data object MainScreen : Routes()
     @Serializable
     data object SettingsScreen : Routes()
+    @Serializable
+    data object PermissionsScreen : Routes()
     @Serializable
     data object StreamScreen : Routes()
     @Serializable

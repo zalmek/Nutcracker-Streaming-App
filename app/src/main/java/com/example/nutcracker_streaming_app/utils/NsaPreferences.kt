@@ -3,17 +3,40 @@ package com.example.nutcracker_streaming_app.utils
 import android.content.Context
 import android.content.SharedPreferences
 import android.media.MediaFormat
+import androidx.core.content.edit
+import androidx.security.crypto.EncryptedSharedPreferences
+import androidx.security.crypto.MasterKey
 import com.example.nutcrackerstreamingapp.R
 
 object NsaPreferences {
     private lateinit var appContext: Context
+    private var encryptedPrefs_: SharedPreferences? = null
+    lateinit var encryptedPrefs: SharedPreferences
     const val NOTIFICATION_CHANNEL_NAME = "NutcrackerChannel"
     const val NOTIFICATION_CHANNEL_ID = "ForegroundStreamingService"
+    const val ENCRYPTED_SHARED_PREFS_NAME = "ENCRYPTED_SHARED_PREFS_NAME"
 
     fun initWithApplicationContext(applicationContext: Context) {
         if (!::appContext.isInitialized) {
             appContext = applicationContext
+
         }
+    }
+
+    private fun encryptedPrefs(): SharedPreferences {
+        if (encryptedPrefs_ != null) return encryptedPrefs
+        val masterKey = MasterKey.Builder(appContext)
+            .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+            .build();
+        encryptedPrefs_ = EncryptedSharedPreferences.create(
+            appContext,
+            ENCRYPTED_SHARED_PREFS_NAME,
+            masterKey,
+            EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+            EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+        )
+        encryptedPrefs = encryptedPrefs_!!
+        return encryptedPrefs
     }
 
     private fun pref(): SharedPreferences {
@@ -23,55 +46,54 @@ object NsaPreferences {
     }
 
     var rtmpLink : Option.Link.RtmpLink
-        get() = Option.Link.RtmpLink(pref().getString(
+        get() = Option.Link.RtmpLink(encryptedPrefs().getString(
             getPrefName(Prefs.RtmpLink), getPrefDefault(Prefs.RtmpLink)
         ).orEmpty())
-        set(value) = pref().edit().putString(getPrefName(Prefs.RtmpLink), value.toString()).apply()
+        set(value) = encryptedPrefs().edit(commit = true) { putString(getPrefName(Prefs.RtmpLink), value.toString()) }
 
     var srtLink : Option.Link.SrtLink
-        get() = Option.Link.SrtLink(pref().getString(
+        get() = Option.Link.SrtLink(encryptedPrefs().getString(
             getPrefName(Prefs.SrtLink), getPrefDefault(Prefs.SrtLink)
         ).orEmpty())
-        set(value) = pref().edit().putString(getPrefName(Prefs.SrtLink), value.toString()).apply()
+        set(value) = encryptedPrefs().edit(commit = true) { putString(getPrefName(Prefs.SrtLink), value.toString()) }
 
     var bitrateRange: Option.Bitrate
         get() = pref().getString(
             getPrefName(Prefs.Bitrate), getPrefDefault(Prefs.Bitrate)
         ).orEmpty().toBitrate()
-        set(value) = pref().edit().putString(getPrefName(Prefs.Bitrate), value.toString()).apply()
+        set(value) = pref().edit(commit = true) { putString(getPrefName(Prefs.Bitrate), value.toString()) }
 
 
     var resolution: Option.Resolution
         get() = pref().getString(
             getPrefName(Prefs.Resolution), getPrefDefault(Prefs.Resolution)
         ).orEmpty().toResolution()
-        set(value) = pref().edit().putString(getPrefName(Prefs.Resolution), value.toString()).apply()
+        set(value) = pref().edit(commit = true) { putString(getPrefName(Prefs.Resolution), value.toString()) }
 
     var framerate: Option.Framerate
         get() = pref().getString(
             getPrefName(Prefs.Framerate), getPrefDefault(Prefs.Framerate)
         ).orEmpty().toFramerate()
-        set(value) = pref().edit().putString(getPrefName(Prefs.Framerate), value.toString()).apply()
+        set(value) = pref().edit(commit = true) { putString(getPrefName(Prefs.Framerate), value.toString()) }
 
     var audioEncoder: Option.AudioEncoder
         get() = Option.AudioEncoder(pref().getString(
             getPrefName(Prefs.AudioEncoder), getPrefDefault(Prefs.AudioEncoder)
         ).orEmpty())
-        set(value) = pref().edit().putString(getPrefName(Prefs.AudioEncoder), value.toString()).apply()
+        set(value) = pref().edit(commit = true) { putString(getPrefName(Prefs.AudioEncoder), value.toString()) }
 
     var videoEncoder: Option.VideoEncoder
         get() = Option.VideoEncoder(pref().getString(
             getPrefName(Prefs.VideoEncoder), getPrefDefault(Prefs.VideoEncoder)
         ).orEmpty())
-        set(value) = pref().edit().putString(getPrefName(Prefs.VideoEncoder), value.toString()).apply()
+        set(value) = pref().edit(commit = true) { putString(getPrefName(Prefs.VideoEncoder), value.toString()) }
 
     var protocol: Option.Protocol
         get() = when {
             pref().getString(getPrefName(Prefs.Protocol), getPrefDefault(Prefs.Protocol)) == Option.Protocol.Srt.PROTOCOL -> Option.Protocol.Srt
             else -> Option.Protocol.Rtmp
         }
-        set(value) = pref().edit().putString(getPrefName(Prefs.Protocol), value.toString())
-            .apply()
+        set(value) = pref().edit(commit = true) { putString(getPrefName(Prefs.Protocol), value.toString()) }
 
     private fun getPrefName(prefs: Prefs): String {
         return when (prefs) {

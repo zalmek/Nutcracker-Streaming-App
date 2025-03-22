@@ -110,7 +110,7 @@ fun SettingsScreen(
                     .clickable(interactionSource = remember { MutableInteractionSource() },
                         indication = null,
                         onClick = { navController.popBackStack() }),
-                painter = painterResource(R.drawable.ic_close_24),
+                painter = painterResource(R.drawable.back_return_svgrepo_com),
                 tint = Colors.Icons.primary,
                 contentDescription = null,
             )
@@ -557,11 +557,12 @@ private fun BitrateDialog(
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         supportingText = {
                             Text(
-                                stringResource(
+                                text = stringResource(
                                     R.string.bitrate_supported_placeholder,
                                     bitrateAvailableRange.lower,
                                     bitrateAvailableRange.upper
-                                )
+                                ),
+                                color = Colors.Text.secondary
                             )
                         },
                         onValueChange = { text = it },
