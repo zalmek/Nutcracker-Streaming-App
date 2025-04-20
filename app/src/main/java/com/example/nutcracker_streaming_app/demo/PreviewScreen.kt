@@ -130,21 +130,30 @@ fun PreviewScreen(
                     activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LOCKED
                     activity.window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
                     coroutineScope.launch {
-                        val streamStarted = streamingService?.startStream()?.await()
-                        if (streamStarted != true) {
+                        try {
+                            val streamStarted = streamingService?.startStream()?.await()
+                            if (streamStarted != true) {
+                                Toast.makeText(
+                                    activity,
+                                    activity.getString(R.string.stream_start_error),
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                                streamingService?.closeStream()
+                                streamActive = false
+                                activity.window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                                activity.requestedOrientation =
+                                    ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+                            } else {
+                                Toast.makeText(
+                                    activity,
+                                    activity.getString(R.string.stream_started), Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                        } catch (e: Exception) {
+                            e.printStackTrace()
                             Toast.makeText(
                                 activity,
-                                activity.getString(R.string.stream_start_error), Toast.LENGTH_SHORT
-                            ).show()
-                            streamingService?.closeStream()
-                            streamActive = false
-                            activity.window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-                            activity.requestedOrientation =
-                                ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
-                        } else {
-                            Toast.makeText(
-                                activity,
-                                activity.getString(R.string.stream_started), Toast.LENGTH_SHORT
+                                activity.getString(R.string.restart_app), Toast.LENGTH_SHORT
                             ).show()
                         }
                     }

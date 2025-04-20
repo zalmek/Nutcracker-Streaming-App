@@ -18,7 +18,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFontFamilyResolver
 import androidx.compose.ui.text.font.createFontFamilyResolver
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -27,7 +26,6 @@ import com.example.nutcracker_streaming_app.demo.PreviewScreen
 import com.example.nutcracker_streaming_app.network.QrResponse
 import com.example.nutcracker_streaming_app.permissions.PermissionScreen
 import com.example.nutcracker_streaming_app.settings.SettingsScreen
-import com.example.nutcracker_streaming_app.settings.SettingsViewModel
 import com.example.nutcracker_streaming_app.ui.theme.Colors
 import com.example.nutcracker_streaming_app.utils.NsaPreferences
 import com.example.nutcracker_streaming_app.utils.Option
@@ -68,6 +66,12 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        val intent = Intent(this, StreamingService::class.java)
+        stopService(intent)
+    }
 }
 
 @Composable
@@ -76,7 +80,6 @@ fun MyAppNavHost(
     intent: Intent? = null,
     navController: NavHostController = rememberNavController(),
 ) {
-    lateinit var settingsViewModel: SettingsViewModel
     val streamingService = rememberStreamingService<StreamingService, StreamingService.LocalBinder> { service }
     NavHost(
         modifier = modifier,
@@ -87,8 +90,7 @@ fun MyAppNavHost(
             PreviewScreen(navController = navController, streamingService)
         }
         composable<Routes.SettingsScreen> { backStackEntry ->
-            settingsViewModel = viewModel<SettingsViewModel>()
-            SettingsScreen(navController, settingsViewModel)
+            SettingsScreen(navController)
         }
         composable<Routes.PermissionsScreen> {
             PermissionScreen(navController)

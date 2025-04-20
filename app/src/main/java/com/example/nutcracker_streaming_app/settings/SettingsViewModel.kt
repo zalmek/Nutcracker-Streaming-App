@@ -4,8 +4,7 @@ import com.example.nutcracker_streaming_app.presentetion.base.BaseViewModel
 import com.example.nutcracker_streaming_app.utils.NsaPreferences
 import com.example.nutcracker_streaming_app.utils.StreamerHelper
 
-class SettingsViewModel :
-    BaseViewModel<SettingsContract.Event, SettingsContract.State, SettingsContract.Effect>() {
+class SettingsViewModel : BaseViewModel<SettingsContract.Event, SettingsContract.State, SettingsContract.Effect>() {
     override fun setInitialState(): SettingsContract.State {
         return SettingsContract.State(
             audioEncoder = NsaPreferences.audioEncoder,

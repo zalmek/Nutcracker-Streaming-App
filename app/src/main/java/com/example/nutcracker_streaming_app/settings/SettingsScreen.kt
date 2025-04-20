@@ -16,10 +16,12 @@ import androidx.compose.foundation.layout.requiredHeightIn
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.Card
@@ -52,6 +54,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.nutcracker_streaming_app.ui.theme.Colors
 import com.example.nutcracker_streaming_app.ui.theme.Fonts
@@ -67,10 +70,11 @@ import kotlinx.collections.immutable.toPersistentList
 @Composable
 fun SettingsScreen(
     navController: NavController,
-    viewModel: SettingsViewModel,
+    viewModel: SettingsViewModel = viewModel(),
 ) {
     val context = LocalContext.current
     val protocols = listOf(Option.Protocol.Srt, Option.Protocol.Rtmp)
+    val scrollState = rememberScrollState()
     LaunchedEffect(NsaPreferences.audioEncoder) {
         StreamerHelper.refreshSettings(StreamerHelper.getSrtStreamer(context), context)
     }
@@ -84,6 +88,7 @@ fun SettingsScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(Colors.Background.main)
+            .verticalScroll(scrollState)
     ) {
         Row(
             modifier = Modifier.padding(
@@ -107,7 +112,8 @@ fun SettingsScreen(
                 modifier = Modifier
                     .align(Alignment.CenterVertically)
                     .size(30.dp)
-                    .clickable(interactionSource = remember { MutableInteractionSource() },
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
                         indication = null,
                         onClick = { navController.popBackStack() }),
                 painter = painterResource(R.drawable.back_return_svgrepo_com),
@@ -143,24 +149,24 @@ fun SettingsScreen(
             currentOption = viewModel.viewState.value.bitrateRange,
             bitrateAvailableRange = viewModel.viewState.value.supportedStates.supportedBitrates
         )
-        SettingItem(
-            setEvent = viewModel::setEvent,
-            currentOption = viewModel.viewState.value.audioEncoder,
-            options = viewModel.viewState.value.supportedStates.supportedAudioEncoder.map {
-                Option.AudioEncoder(
-                    it
-                )
-            }.toPersistentList()
-        )
-        SettingItem(
-            setEvent = viewModel::setEvent,
-            currentOption = viewModel.viewState.value.videoEncoder,
-            options = viewModel.viewState.value.supportedStates.supportedVideoEncoder.map {
-                Option.VideoEncoder(
-                    it
-                )
-            }.toPersistentList()
-        )
+//        SettingItem(
+//            setEvent = viewModel::setEvent,
+//            currentOption = viewModel.viewState.value.audioEncoder,
+//            options = viewModel.viewState.value.supportedStates.supportedAudioEncoder.map {
+//                Option.AudioEncoder(
+//                    it
+//                )
+//            }.toPersistentList()
+//        )
+//        SettingItem(
+//            setEvent = viewModel::setEvent,
+//            currentOption = viewModel.viewState.value.videoEncoder,
+//            options = viewModel.viewState.value.supportedStates.supportedVideoEncoder.map {
+//                Option.VideoEncoder(
+//                    it
+//                )
+//            }.toPersistentList()
+//        )
         SettingItem(
             setEvent = viewModel::setEvent,
             currentOption = viewModel.viewState.value.protocol,
@@ -249,7 +255,8 @@ private fun SettingRow(
     Row(
         modifier = Modifier
             .background(Colors.Background.row)
-            .clickable(interactionSource = interactionSource,
+            .clickable(
+                interactionSource = interactionSource,
                 indication = rememberRipple(color = Colors.Utility.ripple),
                 onClick = { openAlertDialog.value = true })
             .fillMaxWidth(),
@@ -282,7 +289,7 @@ private fun SettingRow(
                     lineHeight = 16.sp,
                     fontSize = 14.sp,
                     color = Colors.Text.secondary,
-                    text = currentOption.toString()
+                    text = currentOption.toPresentationString()
                 )
             }
             HorizontalDivider(color = Colors.Background.main)
@@ -471,7 +478,7 @@ private fun SettingDialog(
                                 onClick = null // null recommended for accessibility with screen readers
                             )
                             Text(
-                                text = option.toString(),
+                                text = option.toPresentationString(),
                                 fontWeight = FontWeight.Normal,
                                 fontSize = 16.sp,
                                 color = Colors.Text.primary,
@@ -511,18 +518,22 @@ private fun BitrateDialog(
     bitrateAvailableRange: Range<Int>,
     onOptionEntered: (SettingsContract.Event) -> Unit
 ) {
-    var text by remember { mutableStateOf(currentOption.range.lower.toString()) }
+    var text by remember { mutableStateOf((currentOption.range.lower / 1000).toString()) }
     val event = event(
         Option.Bitrate(
             Range(
                 maxOf(
                     bitrateAvailableRange.lower,
-                    minOf(text.toIntOrNull() ?: bitrateAvailableRange.lower, bitrateAvailableRange.upper)
+                    minOf(
+                        (text.toIntOrNull()?.times(1000)) ?: bitrateAvailableRange.lower,
+                        bitrateAvailableRange.upper
+                    )
                 ),
-                minOf(
-                    bitrateAvailableRange.upper,
-                    maxOf(text.toIntOrNull() ?: bitrateAvailableRange.upper, bitrateAvailableRange.lower)
-                )
+                bitrateAvailableRange.upper
+//                minOf(
+//                    bitrateAvailableRange.upper,
+//                    maxOf(text.toIntOrNull() ?: bitrateAvailableRange.upper, bitrateAvailableRange.lower)
+//                )
             )
         )
     )
@@ -560,7 +571,7 @@ private fun BitrateDialog(
                                 text = stringResource(
                                     R.string.bitrate_supported_placeholder,
                                     bitrateAvailableRange.lower,
-                                    bitrateAvailableRange.upper
+                                    bitrateAvailableRange.upper/1000
                                 ),
                                 color = Colors.Text.secondary
                             )

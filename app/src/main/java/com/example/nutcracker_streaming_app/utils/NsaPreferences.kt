@@ -4,46 +4,23 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.media.MediaFormat
 import androidx.core.content.edit
-import androidx.security.crypto.EncryptedSharedPreferences
-import androidx.security.crypto.MasterKey
+import com.example.nutcracker_streaming_app.NsaApplication
 import com.example.nutcrackerstreamingapp.R
 
 object NsaPreferences {
     private lateinit var appContext: Context
-    private var encryptedPrefs_: SharedPreferences? = null
-    lateinit var encryptedPrefs: SharedPreferences
     const val NOTIFICATION_CHANNEL_NAME = "NutcrackerChannel"
     const val NOTIFICATION_CHANNEL_ID = "ForegroundStreamingService"
-    const val ENCRYPTED_SHARED_PREFS_NAME = "ENCRYPTED_SHARED_PREFS_NAME"
 
     fun initWithApplicationContext(applicationContext: Context) {
         if (!::appContext.isInitialized) {
             appContext = applicationContext
-
         }
     }
 
-    private fun encryptedPrefs(): SharedPreferences {
-        if (encryptedPrefs_ != null) return encryptedPrefs
-        val masterKey = MasterKey.Builder(appContext)
-            .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
-            .build();
-        encryptedPrefs_ = EncryptedSharedPreferences.create(
-            appContext,
-            ENCRYPTED_SHARED_PREFS_NAME,
-            masterKey,
-            EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-            EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
-        )
-        encryptedPrefs = encryptedPrefs_!!
-        return encryptedPrefs
-    }
+    private fun pref(): SharedPreferences = NsaApplication.prefs
+    private fun encryptedPrefs(): SharedPreferences = NsaApplication.encryptedPrefs
 
-    private fun pref(): SharedPreferences {
-        val name = appContext.getString(R.string.default_preference_name)
-        val mode = Context.MODE_PRIVATE
-        return appContext.getSharedPreferences(name, mode)
-    }
 
     var rtmpLink : Option.Link.RtmpLink
         get() = Option.Link.RtmpLink(encryptedPrefs().getString(
@@ -115,9 +92,9 @@ object NsaPreferences {
             Prefs.VideoEncoder -> MediaFormat.MIMETYPE_VIDEO_AVC
             Prefs.RtmpLink -> ""
             Prefs.SrtLink -> ""
-            Prefs.Protocol -> "rtmp"
+            Prefs.Protocol -> "RTMP"
             Prefs.Framerate -> "30-30"
-            Prefs.Bitrate -> "1000-10000"
+            Prefs.Bitrate -> "2000000-10000000"
         }
     }
 }

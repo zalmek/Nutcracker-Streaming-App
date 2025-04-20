@@ -5,6 +5,7 @@ plugins {
     alias(libs.plugins.jetbrains.kotlin.android)
     alias(libs.plugins.jetbrains.kotlinserialization)
     id("kotlin-kapt")
+    alias(libs.plugins.baselineprofile)
 }
 
 android {
@@ -36,12 +37,20 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
-
+            isMinifyEnabled = true
+            isDebuggable = false
             // Enables resource shrinking, which is performed by the
             // Android Gradle plugin.
-            isShrinkResources = false
-//            proguard-rules.pro"
+            isShrinkResources = true
+            proguardFiles(
+                // Includes the default ProGuard rules files that are packaged with
+                // the Android Gradle plugin. To learn more, go to the section about
+                // R8 configuration files.
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+
+                // Includes a local, custom Proguard rules file
+                "proguard-rules.pro"
+            )
             signingConfig = signingConfigs.getByName("release")
         }
     }
@@ -67,6 +76,8 @@ android {
             pickFirsts += setOf("**/*.so")
         }
     }
+
+
 }
 
 dependencies {
@@ -99,11 +110,14 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
     implementation (libs.androidx.security.crypto)
+    implementation(libs.androidx.profileinstaller)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
     androidTestImplementation(libs.androidx.ui.test.junit4)
+    "baselineProfile"(project(":baselineprofile"))
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
 }

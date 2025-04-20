@@ -25,7 +25,8 @@ object StreamerHelper {
     lateinit var supportedResolutions: List<Size>
     lateinit var supportedFramerates: List<Range<Int>>
     lateinit var supportedBitrates: Range<Int>
-//    lateinit var getSupportedAllProfiles: List<Int>
+
+    //    lateinit var getSupportedAllProfiles: List<Int>
     lateinit var profiles: List<Int>
 
     fun init(context: Context) {
@@ -133,26 +134,37 @@ object StreamerHelper {
 
 @Stable
 sealed class Option {
+    abstract fun toPresentationString(): String
+
     @Stable
-    data class Bitrate(val range: Range<Int>): Option() {
+    data class Bitrate(val range: Range<Int>) : Option() {
         override fun toString(): String {
-            return "${range.lower}-${range.upper}"
+            return "${range.lower} - ${range.upper}"
+        }
+
+        override fun toPresentationString(): String {
+            return "${range.lower / 1000}"
         }
     }
 
     @Stable
-    sealed class Protocol: Option() {
-        data object Srt: Protocol() {
-            const val PROTOCOL = "srt"
+    sealed class Protocol : Option() {
+        data object Srt : Protocol() {
+            const val PROTOCOL = "SRT"
             override fun toString(): String {
                 return PROTOCOL
             }
+
+            override fun toPresentationString(): String = toString() // TODO
         }
-        data object Rtmp: Protocol() {
-            const val PROTOCOL = "rtmp"
+
+        data object Rtmp : Protocol() {
+            const val PROTOCOL = "RTMP"
             override fun toString(): String {
                 return PROTOCOL
             }
+
+            override fun toPresentationString(): String = toString() // TODO
         }
     }
 
@@ -161,6 +173,8 @@ sealed class Option {
         override fun toString(): String {
             return mediaFormat
         }
+
+        override fun toPresentationString(): String = toString() // TODO
     }
 
     @Stable
@@ -168,19 +182,36 @@ sealed class Option {
         override fun toString(): String {
             return mediaFormat
         }
+
+        override fun toPresentationString(): String = toString() // TODO
     }
 
     @Stable
     sealed class Link(val text: String) : Option() {
-        data class SrtLink(val srtLink: String): Link(srtLink) {
+        data class SrtLink(val srtLink: String) : Link(srtLink) {
             override fun toString(): String {
                 return srtLink
             }
+
+            override fun toPresentationString(): String {
+                return if (srtLink.isBlank()) {
+                    "srt://"
+                } else toString()
+            }
+
         }
-        data class RtmpLink(val rtmpLink: String): Link(rtmpLink) {
+
+        data class RtmpLink(val rtmpLink: String) : Link(rtmpLink) {
             override fun toString(): String {
                 return rtmpLink
             }
+
+            override fun toPresentationString(): String {
+                return if (rtmpLink.isBlank()) {
+                    "rtmp://"
+                } else toString()
+            }
+
         }
 
     }
@@ -190,14 +221,24 @@ sealed class Option {
         override fun toString(): String {
             return "${width}x${height}"
         }
+
+        override fun toPresentationString(): String = toString() // TODO
     }
 
     @Stable
     data class Framerate(val range: Range<Int>) : Option() {
-//        sealed class Variable(start: Int, end: Int) : Framerate(Range(start, end))
+        //        sealed class Variable(start: Int, end: Int) : Framerate(Range(start, end))
 //        sealed class Constant(framerate: Int) : Framerate(Range(framerate, framerate))
         override fun toString(): String {
             return "${range.lower}-${range.upper}"
+        }
+
+        override fun toPresentationString(): String {
+            return if (range.lower == range.upper) {
+                "Постоянная частота кадров: ${range.lower}"
+            } else {
+                "Переменная частота кадров: ${range.lower} - ${range.upper}"
+            }
         }
     }
 }
@@ -221,6 +262,6 @@ internal fun String.toFramerate(): Option.Framerate {
 }
 
 internal fun String.toBitrate(): Option.Bitrate {
-    val (start, end) = this.split("-").map { it.toInt() }
+    val (start, end) = this.replace(" ", "").split("-").map { it.toInt() }
     return Option.Bitrate(Range(start, end))
 }

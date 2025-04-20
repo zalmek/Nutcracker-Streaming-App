@@ -27,12 +27,13 @@
     <string name="microphone">Микрофон</string>
     <string name="ask_permission">Запросить</string>
     <string name="permision_notifications">Уведомления</string>
-    <string name="srt_url">Srt Url</string>
+    <string name="srt_url">SRT url</string>
     <string name="rtmp_url">RTMP url</string>
     <string name="stream_start_error">Произошла ошибка при старте стрима</string>
     <string name="stream_started">Стрим запущен</string>
     <string name="pref_name_framerate">Framerate</string>
-    <string name="stream_bitrate">Битрейт стрима</string>
+    <string name="stream_bitrate">Битрейт стрима (Кбит/с)</string>
     <string name="pref_name_bitrate">Bitrate</string>
-    <string name="bitrate_supported_placeholder"><![CDATA[Битрейт должен находится в пределах от %1$s<=bitrate<=%2$s]]></string>
+    <string name="bitrate_supported_placeholder"><![CDATA[Битрейт должен находится в пределах от %1$s < bitrate < %2$s]]></string>
+    <string name="restart_app">Перезапустите приложение</string>
 </resources>

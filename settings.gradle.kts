@@ -21,4 +21,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "NutcrackerStreamingApp"
 include(":app")
- 
+include(":baselineprofile")
