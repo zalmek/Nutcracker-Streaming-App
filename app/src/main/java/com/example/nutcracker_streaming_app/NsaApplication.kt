@@ -6,12 +6,14 @@ import android.content.SharedPreferences
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
 import com.example.nutcracker_streaming_app.utils.NsaPreferences
+import com.example.nutcracker_streaming_app.utils.StreamerHelper
 import com.example.nutcrackerstreamingapp.R
 
 class NsaApplication: Application() {
     override fun attachBaseContext(base: Context?) {
         super.attachBaseContext(base)
         NsaPreferences.initWithApplicationContext(this)
+        StreamerHelper.initSupportedSettings(this)
     }
     companion object {
         const val ENCRYPTED_SHARED_PREFS_NAME = "ENCRYPTED_SHARED_PREFS_NAME"

@@ -30,8 +30,7 @@ class SettingsContract {
         val framerate: Option.Framerate,
         val resolution: Option.Resolution,
         val supportedStates: SupportedStates
-    ) : ViewState {
-    }
+    ) : ViewState
 
     data class SupportedStates(
         val supportedVideoEncoder: List<String>,

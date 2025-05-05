@@ -22,10 +22,9 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.nutcracker_streaming_app.demo.PreviewScreen
 import com.example.nutcracker_streaming_app.network.QrResponse
-import com.example.nutcracker_streaming_app.permissions.PermissionScreen
 import com.example.nutcracker_streaming_app.settings.SettingsScreen
+import com.example.nutcracker_streaming_app.stream.StreamScreen
 import com.example.nutcracker_streaming_app.ui.theme.Colors
 import com.example.nutcracker_streaming_app.utils.NsaPreferences
 import com.example.nutcracker_streaming_app.utils.Option
@@ -84,16 +83,13 @@ fun MyAppNavHost(
     NavHost(
         modifier = modifier,
         navController = navController,
-        startDestination = Routes.PermissionsScreen
+        startDestination = Routes.StreamScreen
     ) {
-        composable<Routes.MainScreen> {
-            PreviewScreen(navController = navController, streamingService)
+        composable<Routes.StreamScreen> {
+            StreamScreen(navController = navController, streamingService = streamingService)
         }
         composable<Routes.SettingsScreen> { backStackEntry ->
             SettingsScreen(navController)
-        }
-        composable<Routes.PermissionsScreen> {
-            PermissionScreen(navController)
         }
     }
     LaunchedEffect(Unit) {

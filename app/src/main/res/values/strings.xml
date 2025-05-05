@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">NutcrackerStreamingApp</string>
+    <string name="app_name">Nutcracker Streaming</string>
     <string name="camara_per">CAMARA_PER</string>
     <string name="default_preference_name">Default</string>
     <string name="pref_name_resolution">Resolution</string>

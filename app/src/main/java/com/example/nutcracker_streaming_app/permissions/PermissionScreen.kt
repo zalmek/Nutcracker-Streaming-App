@@ -1,6 +1,5 @@
 package com.example.nutcracker_streaming_app.permissions
 
-import android.os.Build
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -15,7 +14,6 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -25,49 +23,22 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.navigation.NavController
 import com.example.nutcracker_streaming_app.ui.theme.Colors
 import com.example.nutcracker_streaming_app.ui.theme.Fonts
-import com.example.nutcracker_streaming_app.utils.Routes
-import com.example.nutcracker_streaming_app.utils.StreamerHelper
 import com.example.nutcrackerstreamingapp.R
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.MultiplePermissionsState
 import com.google.accompanist.permissions.PermissionStatus
-import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import com.google.accompanist.permissions.shouldShowRationale
-import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.PersistentList
 
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
 internal fun PermissionScreen(
-    navController: NavController,
+    permissionsList: PersistentList<String>,
+    permissionsState: MultiplePermissionsState,
 ) {
-    val context = LocalContext.current.applicationContext
-    StreamerHelper.init(context)
-    val permissionsList = persistentListOf(
-        android.Manifest.permission.CAMERA,
-        android.Manifest.permission.RECORD_AUDIO,
-    )
-    permissionsList.apply {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-            add(android.Manifest.permission.FOREGROUND_SERVICE)
-        }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-            add(android.Manifest.permission.FOREGROUND_SERVICE_CAMERA)
-        }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            android.Manifest.permission.POST_NOTIFICATIONS
-        }
-    }
-    val permissionsState = rememberMultiplePermissionsState(permissionsList)
-    LaunchedEffect(Unit) {
-        permissionsState.launchMultiplePermissionRequest()
-    }
-    LaunchedEffect(permissionsState.allPermissionsGranted) {
-        if (permissionsState.allPermissionsGranted) {
-            navController.navigate(Routes.MainScreen)
-        }
-    }
+    val context = LocalContext.current
     Column(
         modifier = Modifier
             .background(Colors.Background.main)

@@ -22,7 +22,6 @@ import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -35,6 +34,7 @@ import androidx.compose.material3.RadioButton
 import androidx.compose.material3.RadioButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
@@ -60,7 +60,6 @@ import com.example.nutcracker_streaming_app.ui.theme.Colors
 import com.example.nutcracker_streaming_app.ui.theme.Fonts
 import com.example.nutcracker_streaming_app.utils.NsaPreferences
 import com.example.nutcracker_streaming_app.utils.Option
-import com.example.nutcracker_streaming_app.utils.StreamerHelper
 import com.example.nutcracker_streaming_app.utils.toResolution
 import com.example.nutcrackerstreamingapp.R
 import kotlinx.collections.immutable.PersistentList
@@ -76,10 +75,10 @@ fun SettingsScreen(
     val protocols = listOf(Option.Protocol.Srt, Option.Protocol.Rtmp)
     val scrollState = rememberScrollState()
     LaunchedEffect(NsaPreferences.audioEncoder) {
-        StreamerHelper.refreshSettings(StreamerHelper.getSrtStreamer(context), context)
+        // TODO?
     }
     LaunchedEffect(NsaPreferences.videoEncoder) {
-        StreamerHelper.refreshSettings(StreamerHelper.getSrtStreamer(context), context)
+        // TODO?
     }
     LaunchedEffect(Unit) {
         viewModel.setEvent(SettingsContract.Event.Refresh)
@@ -257,7 +256,7 @@ private fun SettingRow(
             .background(Colors.Background.row)
             .clickable(
                 interactionSource = interactionSource,
-                indication = rememberRipple(color = Colors.Utility.ripple),
+                indication = ripple(color = Colors.Utility.ripple),
                 onClick = { openAlertDialog.value = true })
             .fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
