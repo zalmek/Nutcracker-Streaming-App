@@ -14,19 +14,18 @@ import androidx.compose.runtime.Stable
 import com.example.nutcracker_streaming_app.settings.SettingsContract
 
 object StreamerHelper {
-    lateinit var supportedVideoEncoder: List<String>
-    lateinit var audioEncoder: String
-    lateinit var videoEncoder: String
-    lateinit var inputChannelRange: Range<Int>
-    lateinit var bitrateRange: Range<Int>
-    lateinit var sampleRates: List<Int>
-    lateinit var supportedAudioEncoder: List<String>
-    lateinit var byteFormats: List<Int>
-    lateinit var supportedResolutions: List<Size>
-    lateinit var supportedFramerates: List<Range<Int>>
-    lateinit var supportedBitrates: Range<Int>
-
-    lateinit var profiles: List<Int>
+    private lateinit var supportedVideoEncoder: List<String>
+    private lateinit var audioEncoder: String
+    private lateinit var videoEncoder: String
+    private lateinit var inputChannelRange: Range<Int>
+    private lateinit var bitrateRange: Range<Int>
+    private lateinit var sampleRates: List<Int>
+    private lateinit var supportedAudioEncoder: List<String>
+    private lateinit var byteFormats: List<Int>
+    private lateinit var supportedResolutions: List<Size>
+    private lateinit var supportedFramerates: List<Range<Int>>
+    private lateinit var supportedBitrates: Range<Int>
+    private lateinit var profiles: List<Int>
 
     fun getSupportedStates(): SettingsContract.SupportedStates {
         return SettingsContract.SupportedStates(

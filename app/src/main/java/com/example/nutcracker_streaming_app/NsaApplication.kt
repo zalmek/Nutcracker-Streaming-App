@@ -36,9 +36,9 @@ class NsaApplication: Application() {
         encryptedPrefs = EncryptedSharedPreferences.create(
             /* context = */           applicationContext,
             /* fileName = */          ENCRYPTED_SHARED_PREFS_NAME,
-            /* masterKeyAlias = */    masterKey,
-            /* keyEncryptionScheme = */   EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-            /* valueEncryptionScheme = */ EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+            /* masterKey = */    masterKey,
+            /* prefKeyEncryptionScheme = */   EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+            /* prefValueEncryptionScheme = */ EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
         )
         val name = applicationContext.getString(R.string.default_preference_name)
         val mode = MODE_PRIVATE

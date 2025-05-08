@@ -39,6 +39,7 @@ internal fun PermissionScreen(
     permissionsState: MultiplePermissionsState,
 ) {
     val context = LocalContext.current
+
     Column(
         modifier = Modifier
             .background(Colors.Background.main)

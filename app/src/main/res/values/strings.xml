@@ -36,4 +36,8 @@
     <string name="pref_name_bitrate">Bitrate</string>
     <string name="bitrate_supported_placeholder"><![CDATA[Битрейт должен находится в пределах от %1$s < bitrate < %2$s]]></string>
     <string name="restart_app">Перезапустите приложение</string>
+    <string name="stream_connecting">Идёт подключение</string>
+    <string name="snackbar_stream_connecting">Приложение соединяется с сервером</string>
+    <string name="snackbar_stream_connection_failed">Соединение произошло неудачно</string>
+    <string name="snackbar_stream_stopped">Стрим остановлен</string>
 </resources>

@@ -1,6 +1,5 @@
 package com.example.nutcracker_streaming_app
 
-import android.annotation.SuppressLint
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -8,28 +7,22 @@ import android.app.Service
 import android.content.Intent
 import android.os.Binder
 import android.os.IBinder
-import android.util.Log
 import androidx.core.app.NotificationCompat
-import com.example.nutcracker_streaming_app.utils.NsaPreferences
+import com.example.nutcracker_streaming_app.stream.StreamContract
+import com.example.nutcracker_streaming_app.stream.StreamViewModel
+import com.example.nutcracker_streaming_app.utils.IntentActions
 import com.example.nutcracker_streaming_app.utils.NsaPreferences.NOTIFICATION_CHANNEL_ID
 import com.example.nutcracker_streaming_app.utils.NsaPreferences.NOTIFICATION_CHANNEL_NAME
-import com.example.nutcracker_streaming_app.utils.Option
+import com.example.nutcracker_streaming_app.utils.StreamManager
 import com.pedro.common.ConnectChecker
-import com.pedro.encoder.input.sources.audio.MicrophoneSource
-import com.pedro.extrasources.CameraXSource
-import com.pedro.library.rtmp.RtmpStream
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.async
-import kotlinx.coroutines.withContext
 
 class StreamingService : Service(), ConnectChecker {
     private val coroutineScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
-    private val srtLink get() = NsaPreferences.srtLink.toString()
-    private val rtmpLink get() = NsaPreferences.rtmpLink.toString()
     private val binder = LocalBinder()
+    private var viewModel: StreamViewModel? = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
@@ -39,21 +32,27 @@ class StreamingService : Service(), ConnectChecker {
         )
         notificationManager.createNotificationChannel(channel)
         val notificationIntent = Intent(this, MainActivity::class.java)
-        val pendingIntent: PendingIntent =
-            PendingIntent.getActivity(this, 0, notificationIntent, PendingIntent.FLAG_IMMUTABLE)
+        val pendingIntent: PendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, PendingIntent.FLAG_IMMUTABLE)
+
+        val serviceStopIntent = Intent(this, MainActivity::class.java)
+        serviceStopIntent.putExtra("Notification Intent", IntentActions.STOP_STREAM)
+        val pendingServiceStopIntent: PendingIntent = PendingIntent.getActivity(this, 0, serviceStopIntent, PendingIntent.FLAG_IMMUTABLE)
+
 
         val builder = NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
-            .setContentTitle("My notification").setContentText("Hello World!")
+            .setContentTitle("Nutcracker Streaming").setContentText("Click to stop the stream")
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             // Set the intent that fires when the user taps the notification.
             .setContentIntent(pendingIntent).setAutoCancel(false)
+            .addAction(NotificationCompat.Action(null, "Завершить стрим", pendingServiceStopIntent))
 
 
         startForeground(1, builder.build())
         return super.onStartCommand(intent, flags, startId)
     }
 
-    override fun onBind(p0: Intent?): IBinder? {
+    override fun onBind(p0: Intent?): IBinder {
         return binder
     }
 
@@ -62,68 +61,50 @@ class StreamingService : Service(), ConnectChecker {
             get() = this@StreamingService
     }
 
-    @SuppressLint("MissingPermission")
-    fun startStream(
-        protocol: Option.Protocol = NsaPreferences.protocol
-    ): Deferred<Boolean?> {
-        return coroutineScope.async {
-            when (protocol) {
-                Option.Protocol.Rtmp -> {
-                    try {
-                        val stream: RtmpStream = RtmpStream(
-                            applicationContext,
-                            binder.service,
-                            videoSource = CameraXSource(applicationContext),
-                            audioSource = MicrophoneSource()
-                        ).apply {
-                            getGlInterface().autoHandleOrientation = true
-                            getStreamClient().setBitrateExponentialFactor(0.5f)
-                            getStreamClient().forceIncrementalTs(true)
-                        }
-                        withContext(Dispatchers.Main) {
-                            stream.prepareVideo(1280, 720, 2000000)
-                            stream.prepareAudio(32000, true, 128000)
-                            stream.startStream(rtmpLink)
-                        }
-                        return@async true
-                    } catch (e: Exception) {
-                        Log.d("LOGLINK", "При попытке начать стрим произошла ошибка ${e.message}")
-                        return@async false
-                    }
-                }
-                Option.Protocol.Srt -> {
-                    try {
-                        return@async true
-                    } catch (e: Exception) {
-                        Log.d("LOGLINK", "При попытке начать стрим произошла ошибка ${e.message}")
-                        return@async false
-                    }
-                }
-            }
-        }
+    fun startStream(viewModel: StreamViewModel) {
+        bindViewModel(viewModel)
+        StreamManager.startStream()
+    }
+
+    fun stopStream() {
+        StreamManager.stopStream()
+        viewModel?.setEvent(StreamContract.Event.OnDisconnect)
+        unbindViewModel()
+    }
+
+    fun bindViewModel(viewModel: StreamViewModel) {
+        this.viewModel = viewModel
+    }
+
+    private fun unbindViewModel() {
+        viewModel = null
     }
 
     override fun onConnectionStarted(url: String) {
-        Log.d("ZALMEK", "onConnectionStarted: $url")
+        viewModel?.setEvent(StreamContract.Event.OnConnectionStart)
     }
 
     override fun onConnectionSuccess() {
-        Log.d("ZALMEK", "onConnectionSuccess: ")
+        viewModel?.setEvent(StreamContract.Event.OnConnectionSuccess)
     }
 
     override fun onConnectionFailed(reason: String) {
-        Log.d("ZALMEK", "onConnectionFailed: $reason ")
+        viewModel?.setEvent(StreamContract.Event.OnConnectionFailed)
     }
 
     override fun onDisconnect() {
-        Log.d("ZALMEK", "onDisconnect: ")
+        viewModel?.setEvent(StreamContract.Event.OnDisconnect)
     }
 
     override fun onAuthError() {
-        Log.d("ZALMEK", "onAuthError: ")
+        viewModel?.let {
+
+        }
     }
 
     override fun onAuthSuccess() {
-        Log.d("ZALMEK", "onAuthSuccess: ")
+        viewModel?.let {
+
+        }
     }
 }

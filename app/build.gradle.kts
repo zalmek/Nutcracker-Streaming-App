@@ -43,7 +43,7 @@ android {
     buildTypes {
         release {
             isMinifyEnabled = true
-            isDebuggable = false
+            isDebuggable = true
             // Enables resource shrinking, which is performed by the
             // Android Gradle plugin.
             isShrinkResources = true
@@ -84,25 +84,16 @@ android {
 
 
 }
-configurations.all {
-    exclude(group = "androidx.camera", module = "camera-viewfinder-core") // Удаляем старую версию везде
-}
 
 dependencies {
     implementation(libs.accompanist.permissions)
     // Camera plugin
-    implementation(libs.androidx.camera.core)
-    implementation(libs.androidx.camera.compose)
-    implementation(libs.androidx.camera.lifecycle)
-    implementation(libs.androidx.camera.camera2)
     implementation(libs.accompanist.permissions)
     implementation(libs.androidx.ui.text.google.fonts)
     // Streaming
     implementation(libs.rootencoder)
     implementation (libs.extra.sources)
-    // For RTMP
     implementation(libs.kotlinx.collections.immutable)
-    // For SRT
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.converter.gson)
     implementation(libs.androidx.navigation.compose)

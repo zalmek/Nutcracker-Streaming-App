@@ -54,6 +54,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.nutcracker_streaming_app.ui.theme.Colors
@@ -74,6 +75,7 @@ fun SettingsScreen(
     val context = LocalContext.current
     val protocols = listOf(Option.Protocol.Srt, Option.Protocol.Rtmp)
     val scrollState = rememberScrollState()
+    val viewState by viewModel.viewState.collectAsStateWithLifecycle()
     LaunchedEffect(NsaPreferences.audioEncoder) {
         // TODO?
     }
@@ -121,23 +123,23 @@ fun SettingsScreen(
             )
         }
         StreamLink(
-            state = viewModel.viewState.value.rtmpLink,
+            state = viewState.rtmpLink,
             setEvent = viewModel::setEvent,
         )
         StreamLink(
-            state = viewModel.viewState.value.srtLink,
+            state = viewState.srtLink,
             setEvent = viewModel::setEvent,
         )
         SettingItem(
             setEvent = viewModel::setEvent,
-            currentOption = viewModel.viewState.value.resolution,
-            options = viewModel.viewState.value.supportedStates.supportedResolutions.map { it.toResolution() }
+            currentOption = viewState.resolution,
+            options = viewState.supportedStates.supportedResolutions.map { it.toResolution() }
                 .toPersistentList()
         )
         SettingItem(
             setEvent = viewModel::setEvent,
-            currentOption = viewModel.viewState.value.framerate,
-            options = viewModel.viewState.value.supportedStates.supportedFramerates.map {
+            currentOption = viewState.framerate,
+            options = viewState.supportedStates.supportedFramerates.map {
                 Option.Framerate(
                     it
                 )
@@ -145,8 +147,8 @@ fun SettingsScreen(
         )
         BitrateItem(
             setEvent = viewModel::setEvent,
-            currentOption = viewModel.viewState.value.bitrateRange,
-            bitrateAvailableRange = viewModel.viewState.value.supportedStates.supportedBitrates
+            currentOption = viewState.bitrateRange,
+            bitrateAvailableRange = viewState.supportedStates.supportedBitrates
         )
 //        SettingItem(
 //            setEvent = viewModel::setEvent,
@@ -168,7 +170,7 @@ fun SettingsScreen(
 //        )
         SettingItem(
             setEvent = viewModel::setEvent,
-            currentOption = viewModel.viewState.value.protocol,
+            currentOption = viewState.protocol,
             options = protocols.toPersistentList()
         )
     }
