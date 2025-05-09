@@ -57,6 +57,15 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.example.nutcracker_streaming_app.settings.SettingsContract.Event.InputBitrate
+import com.example.nutcracker_streaming_app.settings.SettingsContract.Event.InputRtmpLink
+import com.example.nutcracker_streaming_app.settings.SettingsContract.Event.InputSrtLink
+import com.example.nutcracker_streaming_app.settings.SettingsContract.Event.SelectAudioEncoder
+import com.example.nutcracker_streaming_app.settings.SettingsContract.Event.SelectFramerate
+import com.example.nutcracker_streaming_app.settings.SettingsContract.Event.SelectProtocol
+import com.example.nutcracker_streaming_app.settings.SettingsContract.Event.SelectResolution
+import com.example.nutcracker_streaming_app.settings.SettingsContract.Event.SelectVideoEncoder
+import com.example.nutcracker_streaming_app.settings.SettingsContract.Event.ToggleAdaptiveBitrate
 import com.example.nutcracker_streaming_app.ui.theme.Colors
 import com.example.nutcracker_streaming_app.ui.theme.Fonts
 import com.example.nutcracker_streaming_app.utils.NsaPreferences
@@ -74,6 +83,7 @@ fun SettingsScreen(
 ) {
     val context = LocalContext.current
     val protocols = listOf(Option.Protocol.Srt, Option.Protocol.Rtmp)
+    val adaptiveBitrateEnabled = listOf(Option.AdaptiveBitrateEnabled(true), Option.AdaptiveBitrateEnabled(false))
     val scrollState = rememberScrollState()
     val viewState by viewModel.viewState.collectAsStateWithLifecycle()
     LaunchedEffect(NsaPreferences.audioEncoder) {
@@ -173,20 +183,26 @@ fun SettingsScreen(
             currentOption = viewState.protocol,
             options = protocols.toPersistentList()
         )
+        SettingItem(
+            setEvent = viewModel::setEvent,
+            currentOption = viewState.adaptiveBitrateEnabled,
+            options = adaptiveBitrateEnabled.toPersistentList()
+        )
     }
 }
 
 @Composable
 private fun event(option: Option): SettingsContract.Event {
     return when (option) {
-        is Option.Link.RtmpLink -> SettingsContract.Event.InputRtmpLink(option)
-        is Option.Link.SrtLink -> SettingsContract.Event.InputSrtLink(option)
-        is Option.Framerate -> SettingsContract.Event.SelectFramerate(option)
-        is Option.Resolution -> SettingsContract.Event.SelectResolution(option)
-        is Option.AudioEncoder -> SettingsContract.Event.SelectAudioEncoder(option)
-        is Option.VideoEncoder -> SettingsContract.Event.SelectVideoEncoder(option)
-        is Option.Protocol -> SettingsContract.Event.SelectProtocol(option)
-        is Option.Bitrate -> SettingsContract.Event.InputBitrate(option)
+        is Option.Link.RtmpLink -> InputRtmpLink(option)
+        is Option.Link.SrtLink -> InputSrtLink(option)
+        is Option.Framerate -> SelectFramerate(option)
+        is Option.Resolution -> SelectResolution(option)
+        is Option.AudioEncoder -> SelectAudioEncoder(option)
+        is Option.VideoEncoder -> SelectVideoEncoder(option)
+        is Option.Protocol -> SelectProtocol(option)
+        is Option.Bitrate -> InputBitrate(option)
+        is Option.AdaptiveBitrateEnabled -> ToggleAdaptiveBitrate(option)
     }
 }
 
@@ -201,6 +217,7 @@ private fun title(option: Option): String {
         is Option.VideoEncoder -> stringResource(R.string.video_encoder)
         is Option.Protocol -> stringResource(R.string.stream_protocol)
         is Option.Bitrate -> stringResource(R.string.stream_bitrate)
+        is Option.AdaptiveBitrateEnabled -> stringResource(R.string.stream_adaptive_bitrate_enabled)
     }
 }
 

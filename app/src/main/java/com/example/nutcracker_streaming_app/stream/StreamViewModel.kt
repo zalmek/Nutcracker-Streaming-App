@@ -14,7 +14,8 @@ class StreamViewModel :
 
         return StreamContract.State(
             streamState = if (StreamManager.isStreaming) StreamState.Connected else StreamState.Disconnected,
-            cameraIsConfigured = StreamManager.isPreConfigured
+            cameraIsConfigured = StreamManager.isPreConfigured,
+            currentBitrate = "0",
         )
     }
 
@@ -77,6 +78,10 @@ class StreamViewModel :
                         StreamManager.srtStream
                     }
                 )
+            }
+
+            is StreamContract.Event.OnNewBitrate -> setState {
+                copy(currentBitrate = event.bitrate)
             }
         }
     }

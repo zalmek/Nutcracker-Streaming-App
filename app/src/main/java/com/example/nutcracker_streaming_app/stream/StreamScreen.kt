@@ -55,7 +55,7 @@ fun StreamScreen(
     val viewState by viewModel.viewState.collectAsStateWithLifecycle()
 
     val streamState = viewState.streamState
-
+    val currentBitrate = viewState.currentBitrate
     val snackbarHostState = remember { SnackbarHostState() }
     var isConfigured = viewState.cameraIsConfigured
 
@@ -126,12 +126,18 @@ fun StreamScreen(
                 .padding(40.dp)
                 .fillMaxSize()
         ) {
+            Text(
+                modifier = Modifier.padding(top = 16.dp),
+                color = Colors.Text.primary,
+                text = currentBitrate
+            )
             if (streamState == StreamState.Disconnected)
                 Icon(
                     painter = painterResource(R.drawable.ic_settings_40),
                     contentDescription = null,
                     tint = Color.White,
                     modifier = Modifier
+                        .padding(top = 16.dp)
                         .align(Alignment.TopEnd)
                         .clickable(
                             enabled = true,
@@ -141,7 +147,9 @@ fun StreamScreen(
                         ),
                 )
             Button(
-                modifier = Modifier.align(Alignment.BottomCenter),
+                modifier = Modifier
+                    .padding(bottom = 8.dp)
+                    .align(Alignment.BottomCenter),
                 colors = ButtonDefaults.buttonColors(containerColor = Colors.Background.button),
                 onClick = { viewModel.setEvent(StreamContract.Event.OnStartStopClicked(streamingService)) }
             ) {

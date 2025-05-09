@@ -43,7 +43,7 @@ android {
     buildTypes {
         release {
             isMinifyEnabled = true
-            isDebuggable = true
+            isDebuggable = false
             // Enables resource shrinking, which is performed by the
             // Android Gradle plugin.
             isShrinkResources = true

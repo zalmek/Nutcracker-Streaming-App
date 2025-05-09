@@ -21,6 +21,7 @@ object Colors {
     object Text {
         val primary = getColor("#FFFFFF")
         val secondary = getColor("#C5C5C5")
+        val primaryContract = getColor("#000000")
         val action = getColor("#49A7FF")
     }
 

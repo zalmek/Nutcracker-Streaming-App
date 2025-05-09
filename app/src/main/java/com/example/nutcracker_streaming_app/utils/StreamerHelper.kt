@@ -86,14 +86,7 @@ object StreamerHelper {
             CamcorderProfile.hasProfile(cameraId.toInt(), q)
         }
 
-        // 6. Собираем битрейт-диапазон на основании профилей -------
-        //    возьмем min и max видеобитрейт среди доступных профилей
-        val bitrates = profiles.map { q ->
-            CamcorderProfile.get(cameraId.toInt(), q).videoBitRate
-        }
-        val minBr = bitrates.minOrNull() ?: 0
-        val maxBr = bitrates.maxOrNull() ?: 0
-        supportedBitrates = Range(minBr, maxBr)
+        supportedBitrates = Range(1, 120_000_000)
 
         // 7. Выбираем кодеки, поддерживающие видео ------------------
         val codecList = MediaCodecList(MediaCodecList.ALL_CODECS)
@@ -155,13 +148,23 @@ object StreamerHelper {
         )
 
         // 12. Диапазон видеобитрейта (общий), если нужен отдельно ---
-        bitrateRange = Range(minBr, maxBr)
+        bitrateRange = Range(1, 120_000_000)
     }
 }
 
 @Stable
 sealed class Option {
     abstract fun toPresentationString(): String
+
+    data class AdaptiveBitrateEnabled(val enabled: Boolean): Option() {
+        override fun toPresentationString(): String {
+            return if (enabled) "Да" else "Нет"
+        }
+
+        override fun toString(): String {
+            return enabled.toString()
+        }
+    }
 
     @Stable
     data class Bitrate(val range: Range<Int>) : Option() {

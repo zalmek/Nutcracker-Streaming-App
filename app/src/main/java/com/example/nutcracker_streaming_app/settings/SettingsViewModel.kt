@@ -15,6 +15,7 @@ class SettingsViewModel : BaseViewModel<SettingsContract.Event, SettingsContract
             resolution = NsaPreferences.resolution,
             protocol = NsaPreferences.protocol,
             bitrateRange = NsaPreferences.bitrateRange,
+            adaptiveBitrateEnabled = NsaPreferences.adaptiveBitrateEnabled,
             supportedStates = StreamerHelper.getSupportedStates()
         )
     }
@@ -63,6 +64,11 @@ class SettingsViewModel : BaseViewModel<SettingsContract.Event, SettingsContract
             is SettingsContract.Event.InputBitrate -> setState {
                 NsaPreferences.bitrateRange = event.bitrateRange
                 copy(bitrateRange = event.bitrateRange)
+            }
+
+            is SettingsContract.Event.ToggleAdaptiveBitrate -> setState {
+                NsaPreferences.adaptiveBitrateEnabled = event.adaptiveBitrateEnabled
+                copy(adaptiveBitrateEnabled = event.adaptiveBitrateEnabled)
             }
         }
     }

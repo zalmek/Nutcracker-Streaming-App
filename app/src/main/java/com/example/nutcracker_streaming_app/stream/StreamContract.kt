@@ -17,6 +17,7 @@ class StreamContract {
         data object Empty: Effect()
     }
     sealed class Event: ViewEvent {
+        data class OnNewBitrate(val bitrate: String): Event()
         data class AttachToService(val service: StreamingService): Event()
         data class OnStartStopClicked(val service: StreamingService): Event()
         data object PrepareVideo: Event()
@@ -39,6 +40,7 @@ class StreamContract {
     data class State(
         val streamState: StreamState,
         val cameraIsConfigured: Boolean,
+        val currentBitrate: String,
     ): ViewState
 }
 

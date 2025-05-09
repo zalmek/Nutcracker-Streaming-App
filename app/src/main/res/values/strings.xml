@@ -40,4 +40,6 @@
     <string name="snackbar_stream_connecting">Приложение соединяется с сервером</string>
     <string name="snackbar_stream_connection_failed">Соединение произошло неудачно</string>
     <string name="snackbar_stream_stopped">Стрим остановлен</string>
+    <string name="pref_name_adaptive_bitrate_enabled">adaptive_bitrate_enabled</string>
+    <string name="stream_adaptive_bitrate_enabled">Адаптивный битрейт</string>
 </resources>
