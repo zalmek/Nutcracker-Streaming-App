@@ -72,6 +72,13 @@ object NsaPreferences {
         }
         set(value) = pref().edit(commit = true) { putString(getPrefName(Prefs.Protocol), value.toString()) }
 
+    var adaptiveBitrateEnabled: Option.AdaptiveBitrateEnabled
+        get() = when {
+            pref().getString(getPrefName(Prefs.AdaptBitrate), getPrefDefault(Prefs.AdaptBitrate)) == "false" -> Option.AdaptiveBitrateEnabled(false)
+            else -> Option.AdaptiveBitrateEnabled(true)
+        }
+        set(value) = pref().edit(commit = true) { putString(getPrefName(Prefs.AdaptBitrate), value.toString()) }
+
     private fun getPrefName(prefs: Prefs): String {
         return when (prefs) {
             Prefs.Resolution -> appContext.getString(R.string.pref_name_resolution)
@@ -82,6 +89,7 @@ object NsaPreferences {
             Prefs.Protocol -> appContext.getString(R.string.pref_name_protocol)
             Prefs.Framerate -> appContext.getString(R.string.pref_name_framerate)
             Prefs.Bitrate -> appContext.getString(R.string.pref_name_bitrate)
+            Prefs.AdaptBitrate -> appContext.getString(R.string.pref_name_adaptive_bitrate_enabled)
         }
     }
 
@@ -95,6 +103,7 @@ object NsaPreferences {
             Prefs.Protocol -> "RTMP"
             Prefs.Framerate -> "30-30"
             Prefs.Bitrate -> "2000000-10000000"
+            Prefs.AdaptBitrate -> "false"
         }
     }
 }
@@ -110,4 +119,5 @@ sealed class Prefs {
     data object RtmpLink: Prefs()
     data object SrtLink: Prefs()
     data object Protocol: Prefs()
+    data object AdaptBitrate: Prefs()
 }

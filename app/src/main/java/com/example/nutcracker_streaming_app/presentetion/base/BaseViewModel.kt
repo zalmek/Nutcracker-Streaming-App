@@ -1,12 +1,13 @@
 package com.example.nutcracker_streaming_app.presentetion.base
 
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.State
-import androidx.compose.runtime.mutableStateOf
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 
@@ -15,6 +16,8 @@ interface ViewEvent
 interface ViewState
 
 interface ViewSideEffect
+
+interface Contract: ViewEvent, ViewState, ViewSideEffect
 
 const val SIDE_EFFECTS_KEY = "side-effects_key"
 
@@ -25,8 +28,8 @@ abstract class BaseViewModel<Event: ViewEvent, UiState: ViewState, Effect: ViewS
 
     private val initialState: UiState by lazy { setInitialState() }
 
-    private val _viewState: MutableState<UiState> = mutableStateOf(initialState)
-    val viewState: State<UiState> = _viewState
+    private val _viewState: MutableStateFlow<UiState> = MutableStateFlow(initialState)
+    val viewState: StateFlow<UiState> = _viewState.asStateFlow()
 
     private val _event: MutableSharedFlow<Event> = MutableSharedFlow()
 
@@ -46,11 +49,13 @@ abstract class BaseViewModel<Event: ViewEvent, UiState: ViewState, Effect: ViewS
     }
 
     fun setEvent(event: Event) {
+        Log.d(this::class.java.toString(), "setEvent: $event")
         viewModelScope.launch { _event.emit(event) }
     }
 
     protected fun setState(reducer: UiState.() -> UiState) {
         val newState = viewState.value.reducer()
+        Log.d(this::class.java.toString(), "setEvent: $newState")
         _viewState.value = newState
     }
 

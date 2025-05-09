@@ -3,6 +3,7 @@ package com.example.nutcracker_streaming_app
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -22,16 +23,19 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.nutcracker_streaming_app.demo.PreviewScreen
 import com.example.nutcracker_streaming_app.network.QrResponse
 import com.example.nutcracker_streaming_app.permissions.PermissionScreen
 import com.example.nutcracker_streaming_app.settings.SettingsScreen
+import com.example.nutcracker_streaming_app.stream.StreamScreen
 import com.example.nutcracker_streaming_app.ui.theme.Colors
 import com.example.nutcracker_streaming_app.utils.NsaPreferences
 import com.example.nutcracker_streaming_app.utils.Option
 import com.example.nutcracker_streaming_app.utils.Routes
 import com.example.nutcracker_streaming_app.utils.rememberStreamingService
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import com.google.gson.Gson
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.CoroutineExceptionHandler
 import okhttp3.Call
 import okhttp3.Callback
@@ -41,6 +45,9 @@ import okhttp3.Response
 import java.io.IOException
 
 class MainActivity : ComponentActivity() {
+    private var streamingService: StreamingService? = null
+
+    @OptIn(ExperimentalPermissionsApi::class)
     @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -49,6 +56,32 @@ class MainActivity : ComponentActivity() {
             val handler = CoroutineExceptionHandler { _, throwable ->
                 // process the Throwable
                 Log.e("ERROR FONT", "There has been an issue: ", throwable)
+            }
+            val permissionsList = persistentListOf(
+                android.Manifest.permission.CAMERA,
+                android.Manifest.permission.RECORD_AUDIO,
+            )
+            permissionsList.apply {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                    add(android.Manifest.permission.FOREGROUND_SERVICE)
+                }
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                    add(android.Manifest.permission.FOREGROUND_SERVICE_CAMERA)
+                }
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    android.Manifest.permission.POST_NOTIFICATIONS
+                }
+            }
+            val permissionsState = rememberMultiplePermissionsState(permissionsList)
+
+            streamingService = rememberStreamingService<StreamingService, StreamingService.LocalBinder> { service }
+            LaunchedEffect(streamingService, permissionsState.allPermissionsGranted) {
+                permissionsState.launchMultiplePermissionRequest()
+                if (streamingService == null) {
+                    if (permissionsState.allPermissionsGranted) {
+                        startForegroundService(Intent(this@MainActivity, StreamingService::class.java))
+                    }
+                }
             }
             CompositionLocalProvider(
                 LocalFontFamilyResolver provides createFontFamilyResolver(
@@ -61,39 +94,34 @@ class MainActivity : ComponentActivity() {
                         .fillMaxSize()
                         .background(Colors.Background.main)
                 ) {
-                    MyAppNavHost(intent = intent)
+                    if (permissionsState.allPermissionsGranted) {
+                        streamingService?.let { MyAppNavHost(intent = intent, service = it) }
+                    } else {
+                        PermissionScreen(permissionsList, permissionsState)
+                    }
                 }
             }
         }
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        val intent = Intent(this, StreamingService::class.java)
-        stopService(intent)
     }
 }
 
 @Composable
 fun MyAppNavHost(
+    service: StreamingService,
     modifier: Modifier = Modifier,
     intent: Intent? = null,
     navController: NavHostController = rememberNavController(),
 ) {
-    val streamingService = rememberStreamingService<StreamingService, StreamingService.LocalBinder> { service }
     NavHost(
         modifier = modifier,
         navController = navController,
-        startDestination = Routes.PermissionsScreen
+        startDestination = Routes.StreamScreen
     ) {
-        composable<Routes.MainScreen> {
-            PreviewScreen(navController = navController, streamingService)
+        composable<Routes.StreamScreen> {
+            StreamScreen(navController = navController, streamingService = service)
         }
         composable<Routes.SettingsScreen> { backStackEntry ->
             SettingsScreen(navController)
-        }
-        composable<Routes.PermissionsScreen> {
-            PermissionScreen(navController)
         }
     }
     LaunchedEffect(Unit) {
@@ -101,7 +129,6 @@ fun MyAppNavHost(
         val appLinkData: Uri? = intent?.data
         appLinkData?.let {
 //            NsaPreferences.streamLink = Option.Link(appLinkData.toString())
-            navController.navigate(Routes.PermissionsScreen)
             val client = OkHttpClient()
             val request = Request.Builder()
                 .url(appLinkData.toString())

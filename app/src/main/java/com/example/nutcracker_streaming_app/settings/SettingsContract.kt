@@ -18,6 +18,7 @@ class SettingsContract {
         data class InputRtmpLink(val rtmpLink: Option.Link.RtmpLink) : Event()
         data class SelectAudioEncoder(val audioEncoder: Option.AudioEncoder): Event()
         data class SelectVideoEncoder(val videoEncoder: Option.VideoEncoder): Event()
+        data class ToggleAdaptiveBitrate(val adaptiveBitrateEnabled: Option.AdaptiveBitrateEnabled): Event()
     }
 
     data class State(
@@ -29,9 +30,9 @@ class SettingsContract {
         val srtLink: Option.Link,
         val framerate: Option.Framerate,
         val resolution: Option.Resolution,
+        val adaptiveBitrateEnabled: Option.AdaptiveBitrateEnabled,
         val supportedStates: SupportedStates
-    ) : ViewState {
-    }
+    ) : ViewState
 
     data class SupportedStates(
         val supportedVideoEncoder: List<String>,

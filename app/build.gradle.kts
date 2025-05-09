@@ -4,18 +4,19 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
     alias(libs.plugins.jetbrains.kotlinserialization)
+    alias(libs.plugins.compose.compiler)
     id("kotlin-kapt")
     alias(libs.plugins.baselineprofile)
 }
 
 android {
     namespace = "com.example.nutcrackerstreamingapp"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.example.nutcrackerstreamingapp"
         minSdk = 26
-        targetSdk = 34
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0"
 
@@ -27,10 +28,14 @@ android {
 
     signingConfigs {
         create("release") {
-            storeFile = file("C:\\Users\\zalmek\\AndroidStudioProjects\\NutcrackerStreamingApp\\nutcracker")
-            storePassword = gradleLocalProperties(rootDir, providers).getProperty("keystore_password").toString()
+            storeFile =
+                file("C:\\Users\\zalmek\\AndroidStudioProjects\\NutcrackerStreamingApp\\nutcracker")
+            storePassword =
+                gradleLocalProperties(rootDir, providers).getProperty("keystore_password")
+                    .toString()
             keyAlias = gradleLocalProperties(rootDir, providers).getProperty("key_alias").toString()
-            keyPassword = gradleLocalProperties(rootDir, providers).getProperty("key_password").toString()
+            keyPassword =
+                gradleLocalProperties(rootDir, providers).getProperty("key_password").toString()
 
         }
     }
@@ -83,24 +88,15 @@ android {
 dependencies {
     implementation(libs.accompanist.permissions)
     // Camera plugin
-    implementation (libs.camera.core)
-    implementation (libs.androidx.camera.camera2)
-    implementation (libs.androidx.camera.view)
-    implementation (libs.androidx.camera.lifecycle)
-    implementation(libs.qr.scanner.plugin)
+    implementation(libs.accompanist.permissions)
     implementation(libs.androidx.ui.text.google.fonts)
-
     // Streaming
-    implementation (libs.streampack)
-    // For RTMP
-    implementation (libs.streampack.extension.rtmp)
+    implementation(libs.rootencoder)
+    implementation (libs.extra.sources)
     implementation(libs.kotlinx.collections.immutable)
-    // For SRT
-    implementation (libs.streampack.extension.srt)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.converter.gson)
     implementation(libs.androidx.navigation.compose)
-    implementation(libs.retrofit)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -109,7 +105,7 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
-    implementation (libs.androidx.security.crypto)
+    implementation(libs.androidx.security.crypto)
     implementation(libs.androidx.profileinstaller)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

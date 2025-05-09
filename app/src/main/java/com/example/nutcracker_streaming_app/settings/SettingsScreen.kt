@@ -22,7 +22,6 @@ import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -35,6 +34,7 @@ import androidx.compose.material3.RadioButton
 import androidx.compose.material3.RadioButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
@@ -54,13 +54,22 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.example.nutcracker_streaming_app.settings.SettingsContract.Event.InputBitrate
+import com.example.nutcracker_streaming_app.settings.SettingsContract.Event.InputRtmpLink
+import com.example.nutcracker_streaming_app.settings.SettingsContract.Event.InputSrtLink
+import com.example.nutcracker_streaming_app.settings.SettingsContract.Event.SelectAudioEncoder
+import com.example.nutcracker_streaming_app.settings.SettingsContract.Event.SelectFramerate
+import com.example.nutcracker_streaming_app.settings.SettingsContract.Event.SelectProtocol
+import com.example.nutcracker_streaming_app.settings.SettingsContract.Event.SelectResolution
+import com.example.nutcracker_streaming_app.settings.SettingsContract.Event.SelectVideoEncoder
+import com.example.nutcracker_streaming_app.settings.SettingsContract.Event.ToggleAdaptiveBitrate
 import com.example.nutcracker_streaming_app.ui.theme.Colors
 import com.example.nutcracker_streaming_app.ui.theme.Fonts
 import com.example.nutcracker_streaming_app.utils.NsaPreferences
 import com.example.nutcracker_streaming_app.utils.Option
-import com.example.nutcracker_streaming_app.utils.StreamerHelper
 import com.example.nutcracker_streaming_app.utils.toResolution
 import com.example.nutcrackerstreamingapp.R
 import kotlinx.collections.immutable.PersistentList
@@ -74,12 +83,14 @@ fun SettingsScreen(
 ) {
     val context = LocalContext.current
     val protocols = listOf(Option.Protocol.Srt, Option.Protocol.Rtmp)
+    val adaptiveBitrateEnabled = listOf(Option.AdaptiveBitrateEnabled(true), Option.AdaptiveBitrateEnabled(false))
     val scrollState = rememberScrollState()
+    val viewState by viewModel.viewState.collectAsStateWithLifecycle()
     LaunchedEffect(NsaPreferences.audioEncoder) {
-        StreamerHelper.refreshSettings(StreamerHelper.getSrtStreamer(context), context)
+        // TODO?
     }
     LaunchedEffect(NsaPreferences.videoEncoder) {
-        StreamerHelper.refreshSettings(StreamerHelper.getSrtStreamer(context), context)
+        // TODO?
     }
     LaunchedEffect(Unit) {
         viewModel.setEvent(SettingsContract.Event.Refresh)
@@ -122,23 +133,23 @@ fun SettingsScreen(
             )
         }
         StreamLink(
-            state = viewModel.viewState.value.rtmpLink,
+            state = viewState.rtmpLink,
             setEvent = viewModel::setEvent,
         )
         StreamLink(
-            state = viewModel.viewState.value.srtLink,
+            state = viewState.srtLink,
             setEvent = viewModel::setEvent,
         )
         SettingItem(
             setEvent = viewModel::setEvent,
-            currentOption = viewModel.viewState.value.resolution,
-            options = viewModel.viewState.value.supportedStates.supportedResolutions.map { it.toResolution() }
+            currentOption = viewState.resolution,
+            options = viewState.supportedStates.supportedResolutions.map { it.toResolution() }
                 .toPersistentList()
         )
         SettingItem(
             setEvent = viewModel::setEvent,
-            currentOption = viewModel.viewState.value.framerate,
-            options = viewModel.viewState.value.supportedStates.supportedFramerates.map {
+            currentOption = viewState.framerate,
+            options = viewState.supportedStates.supportedFramerates.map {
                 Option.Framerate(
                     it
                 )
@@ -146,8 +157,8 @@ fun SettingsScreen(
         )
         BitrateItem(
             setEvent = viewModel::setEvent,
-            currentOption = viewModel.viewState.value.bitrateRange,
-            bitrateAvailableRange = viewModel.viewState.value.supportedStates.supportedBitrates
+            currentOption = viewState.bitrateRange,
+            bitrateAvailableRange = viewState.supportedStates.supportedBitrates
         )
 //        SettingItem(
 //            setEvent = viewModel::setEvent,
@@ -169,8 +180,13 @@ fun SettingsScreen(
 //        )
         SettingItem(
             setEvent = viewModel::setEvent,
-            currentOption = viewModel.viewState.value.protocol,
+            currentOption = viewState.protocol,
             options = protocols.toPersistentList()
+        )
+        SettingItem(
+            setEvent = viewModel::setEvent,
+            currentOption = viewState.adaptiveBitrateEnabled,
+            options = adaptiveBitrateEnabled.toPersistentList()
         )
     }
 }
@@ -178,14 +194,15 @@ fun SettingsScreen(
 @Composable
 private fun event(option: Option): SettingsContract.Event {
     return when (option) {
-        is Option.Link.RtmpLink -> SettingsContract.Event.InputRtmpLink(option)
-        is Option.Link.SrtLink -> SettingsContract.Event.InputSrtLink(option)
-        is Option.Framerate -> SettingsContract.Event.SelectFramerate(option)
-        is Option.Resolution -> SettingsContract.Event.SelectResolution(option)
-        is Option.AudioEncoder -> SettingsContract.Event.SelectAudioEncoder(option)
-        is Option.VideoEncoder -> SettingsContract.Event.SelectVideoEncoder(option)
-        is Option.Protocol -> SettingsContract.Event.SelectProtocol(option)
-        is Option.Bitrate -> SettingsContract.Event.InputBitrate(option)
+        is Option.Link.RtmpLink -> InputRtmpLink(option)
+        is Option.Link.SrtLink -> InputSrtLink(option)
+        is Option.Framerate -> SelectFramerate(option)
+        is Option.Resolution -> SelectResolution(option)
+        is Option.AudioEncoder -> SelectAudioEncoder(option)
+        is Option.VideoEncoder -> SelectVideoEncoder(option)
+        is Option.Protocol -> SelectProtocol(option)
+        is Option.Bitrate -> InputBitrate(option)
+        is Option.AdaptiveBitrateEnabled -> ToggleAdaptiveBitrate(option)
     }
 }
 
@@ -200,6 +217,7 @@ private fun title(option: Option): String {
         is Option.VideoEncoder -> stringResource(R.string.video_encoder)
         is Option.Protocol -> stringResource(R.string.stream_protocol)
         is Option.Bitrate -> stringResource(R.string.stream_bitrate)
+        is Option.AdaptiveBitrateEnabled -> stringResource(R.string.stream_adaptive_bitrate_enabled)
     }
 }
 
@@ -257,7 +275,7 @@ private fun SettingRow(
             .background(Colors.Background.row)
             .clickable(
                 interactionSource = interactionSource,
-                indication = rememberRipple(color = Colors.Utility.ripple),
+                indication = ripple(color = Colors.Utility.ripple),
                 onClick = { openAlertDialog.value = true })
             .fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,

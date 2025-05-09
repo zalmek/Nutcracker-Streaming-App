@@ -1,117 +1,31 @@
 package com.example.nutcracker_streaming_app.utils
 
-import android.annotation.SuppressLint
 import android.content.Context
+import android.hardware.camera2.CameraCharacteristics
+import android.hardware.camera2.CameraManager
+import android.media.AudioFormat
+import android.media.AudioRecord
+import android.media.CamcorderProfile
+import android.media.MediaCodecList
+import android.media.MediaRecorder
 import android.util.Range
 import android.util.Size
 import androidx.compose.runtime.Stable
 import com.example.nutcracker_streaming_app.settings.SettingsContract
-import io.github.thibaultbee.streampack.data.AudioConfig
-import io.github.thibaultbee.streampack.data.VideoConfig
-import io.github.thibaultbee.streampack.ext.rtmp.streamers.CameraRtmpLiveStreamer
-import io.github.thibaultbee.streampack.ext.srt.streamers.CameraSrtLiveStreamer
-import io.github.thibaultbee.streampack.streamers.live.BaseCameraLiveStreamer
-import io.github.thibaultbee.streampack.utils.defaultCameraId
 
 object StreamerHelper {
-    lateinit var supportedVideoEncoder: List<String>
-    lateinit var audioEncoder: String
-    lateinit var videoEncoder: String
-    lateinit var inputChannelRange: Range<Int>
-    lateinit var bitrateRange: Range<Int>
-    lateinit var sampleRates: List<Int>
-    lateinit var supportedAudioEncoder: List<String>
-    lateinit var byteFormats: List<Int>
-    lateinit var supportedResolutions: List<Size>
-    lateinit var supportedFramerates: List<Range<Int>>
-    lateinit var supportedBitrates: Range<Int>
-
-    //    lateinit var getSupportedAllProfiles: List<Int>
-    lateinit var profiles: List<Int>
-
-    fun init(context: Context) {
-        getSrtStreamer(context, false)
-    }
-
-    fun getSrtStreamer(context: Context, needToConfig: Boolean = true): CameraSrtLiveStreamer {
-        val srtLiveStreamer = CameraSrtLiveStreamer(context = context)
-        refreshSettings(srtLiveStreamer, context)
-        if (needToConfig) configureStreamer(srtLiveStreamer)
-        return srtLiveStreamer
-    }
-
-    fun getRtmpStreamer(context: Context): CameraRtmpLiveStreamer {
-        val rtmpLiveStreamer = CameraRtmpLiveStreamer(context = context)
-        refreshSettings(rtmpLiveStreamer, context)
-        configureStreamer(rtmpLiveStreamer)
-        return rtmpLiveStreamer
-    }
-
-    @SuppressLint("MissingPermission")
-    fun configureStreamer(streamer: BaseCameraLiveStreamer) {
-        val videoConfig = VideoConfig(
-            resolution = NsaPreferences.resolution.toSize(),
-            fps = NsaPreferences.framerate.range.upper,
-            startBitrate = NsaPreferences.bitrateRange.range.lower,
-//            mimeType = NsaPreferences.videoEncoder.mediaFormat
-        )
-
-        val audioConfig = AudioConfig(
-//            mimeType = NsaPreferences.audioEncoder.mediaFormat
-        )
-
-        streamer.configure(audioConfig, videoConfig)
-    }
-
-    fun refreshSettings(
-        streamer: BaseCameraLiveStreamer,
-        context: Context
-    ) {
-        // Inflates video encoders
-        supportedVideoEncoder = streamer.helper.video.supportedEncoders
-
-        // AudioEncoders
-        supportedAudioEncoder = streamer.helper.audio.supportedEncoders
-
-        audioEncoder = supportedAudioEncoder[0]
-
-        videoEncoder = supportedVideoEncoder[0]
-
-        // Inflates audio number of channel
-        inputChannelRange = streamer.helper.audio.getSupportedInputChannelRange(audioEncoder)
-
-        // Inflates audio bitrate
-        bitrateRange = streamer.helper.audio.getSupportedBitrates(audioEncoder)
-
-        // Inflates audio sample rate
-        sampleRates = streamer.helper.audio.getSupportedSampleRates(audioEncoder)
-
-        // Inflates audio byte format
-        byteFormats = streamer.helper.audio.getSupportedByteFormats()
-
-        // Inflates video resolutions
-        supportedResolutions = streamer.helper.video.getSupportedResolutions(
-            context,
-            videoEncoder
-        )
-
-        // Inflates video fps
-        supportedFramerates = streamer.helper.video.getSupportedFramerates(
-            context,
-            videoEncoder,
-            context.defaultCameraId
-        )
-
-        // Inflates video bitrate
-        supportedBitrates = streamer.helper.video.getSupportedBitrates(videoEncoder)
-
-        // Inflates profile
-        profiles = streamer.helper.video.getSupportedAllProfiles(
-            context,
-            videoEncoder,
-            context.defaultCameraId
-        ).map { it }
-    }
+    private lateinit var supportedVideoEncoder: List<String>
+    private lateinit var audioEncoder: String
+    private lateinit var videoEncoder: String
+    private lateinit var inputChannelRange: Range<Int>
+    private lateinit var bitrateRange: Range<Int>
+    private lateinit var sampleRates: List<Int>
+    private lateinit var supportedAudioEncoder: List<String>
+    private lateinit var byteFormats: List<Int>
+    private lateinit var supportedResolutions: List<Size>
+    private lateinit var supportedFramerates: List<Range<Int>>
+    private lateinit var supportedBitrates: Range<Int>
+    private lateinit var profiles: List<Int>
 
     fun getSupportedStates(): SettingsContract.SupportedStates {
         return SettingsContract.SupportedStates(
@@ -130,11 +44,127 @@ object StreamerHelper {
             profiles,
         )
     }
+
+    fun initSupportedSettings(context: Context) {
+        // 1. Находим ID задней (главной) камеры -----------------------
+        val cameraManager = context.getSystemService(Context.CAMERA_SERVICE) as CameraManager
+        val cameraId = cameraManager.cameraIdList.first { id ->
+            val char = cameraManager.getCameraCharacteristics(id)
+            char.get(CameraCharacteristics.LENS_FACING) == CameraCharacteristics.LENS_FACING_BACK
+        }
+
+        // 2. Получаем характеристики этой камеры -------------------
+        val characteristics = cameraManager.getCameraCharacteristics(cameraId)
+
+        val configMap = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)
+            ?: throw IllegalStateException("StreamConfigurationMap недоступен")
+        supportedFramerates = characteristics.get(CameraCharacteristics.CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES)
+                ?.toList() ?: emptyList()
+
+        // 3. Собираем поддерживаемые разрешения ---------------------
+        //    берем все разрешения для записи видео через MediaRecorder
+        supportedResolutions = configMap
+            .getOutputSizes(MediaRecorder::class.java)
+            .toList()
+
+        // 4. Собираем все допустимые диапазоны FPS для видеовыхода ---
+//        supportedFramerates += configMap
+//            .highSpeedVideoFpsRanges
+//            .toList()
+
+        // 5. Определяем профили видеозаписи (CamcorderProfile) ------
+        //    проверяем, какие предустановленные профили вообще есть
+        val allProfiles = listOf(
+            CamcorderProfile.QUALITY_HIGH,
+            CamcorderProfile.QUALITY_LOW,
+            CamcorderProfile.QUALITY_480P,
+            CamcorderProfile.QUALITY_720P,
+            CamcorderProfile.QUALITY_1080P,
+            CamcorderProfile.QUALITY_2160P
+        )
+        profiles = allProfiles.filter { q ->
+            CamcorderProfile.hasProfile(cameraId.toInt(), q)
+        }
+
+        supportedBitrates = Range(1, 120_000_000)
+
+        // 7. Выбираем кодеки, поддерживающие видео ------------------
+        val codecList = MediaCodecList(MediaCodecList.ALL_CODECS)
+        val videoTypes = listOf("video/avc", "video/hevc", "video/mp4v-es", "video/x-vnd.on2.vp8")
+        supportedVideoEncoder = codecList.codecInfos
+            .filter { it.isEncoder }
+            .flatMap { ci -> ci.supportedTypes.toList() }
+            .distinct()
+            .filter { mime -> videoTypes.contains(mime) }
+        // Берём первый попавшийся для примера
+        videoEncoder = supportedVideoEncoder.firstOrNull()
+            ?: throw IllegalStateException("Нет видеокодека")
+
+        // 8. Аналогично — список и выбор аудиокодека -----------------
+        val audioTypes = listOf("audio/mp4a-latm", "audio/3gpp", "audio/vorbis")
+        supportedAudioEncoder = codecList.codecInfos
+            .filter { it.isEncoder }
+            .flatMap { it.supportedTypes.toList() }
+            .distinct()
+            .filter { audioTypes.contains(it) }
+        audioEncoder = supportedAudioEncoder.firstOrNull()
+            ?: throw IllegalStateException("Нет аудиокодека")
+
+        // 9. Диапазон входных каналов аудио --------------------------
+        //    обычно 1 (моно) и 2 (стерео). Проверим, какие реально работают:
+        val possibleRates = listOf(1, 2)
+        val good = possibleRates.filter { channels ->
+            val sr = 44100  // любой стандартный sample rate
+            val buf = AudioRecord.getMinBufferSize(
+                sr,
+                if (channels == 1)
+                    AudioFormat.CHANNEL_IN_MONO
+                else
+                    AudioFormat.CHANNEL_IN_STEREO,
+                AudioFormat.ENCODING_PCM_16BIT
+            )
+            buf > 0
+        }
+        inputChannelRange = if (good.isNotEmpty()) {
+            Range(good.minOrNull()!!, good.maxOrNull()!!)
+        } else {
+            Range(1, 1)
+        }
+
+        // 10. Поддерживаемые sample rates для AudioRecord ----------
+        val allSampleRates = listOf(8000, 11025, 16000, 22050, 32000, 44100, 48000)
+        sampleRates = allSampleRates.filter { rate ->
+            AudioRecord.getMinBufferSize(
+                rate,
+                AudioFormat.CHANNEL_IN_STEREO,
+                AudioFormat.ENCODING_PCM_16BIT
+            ) > 0
+        }
+
+        // 11. Поддерживаемые форматы PCM (байтовые форматы) ---------
+        byteFormats = listOf(
+            AudioFormat.ENCODING_PCM_8BIT,
+            AudioFormat.ENCODING_PCM_16BIT
+        )
+
+        // 12. Диапазон видеобитрейта (общий), если нужен отдельно ---
+        bitrateRange = Range(1, 120_000_000)
+    }
 }
 
 @Stable
 sealed class Option {
     abstract fun toPresentationString(): String
+
+    data class AdaptiveBitrateEnabled(val enabled: Boolean): Option() {
+        override fun toPresentationString(): String {
+            return if (enabled) "Да" else "Нет"
+        }
+
+        override fun toString(): String {
+            return enabled.toString()
+        }
+    }
 
     @Stable
     data class Bitrate(val range: Range<Int>) : Option() {
@@ -227,8 +257,6 @@ sealed class Option {
 
     @Stable
     data class Framerate(val range: Range<Int>) : Option() {
-        //        sealed class Variable(start: Int, end: Int) : Framerate(Range(start, end))
-//        sealed class Constant(framerate: Int) : Framerate(Range(framerate, framerate))
         override fun toString(): String {
             return "${range.lower}-${range.upper}"
         }
