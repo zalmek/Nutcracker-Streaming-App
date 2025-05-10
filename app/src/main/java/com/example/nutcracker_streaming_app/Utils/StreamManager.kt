@@ -19,16 +19,18 @@ object StreamManager {
     lateinit var srtStream: SrtStream
     lateinit var srtBitrateAdapter: BitrateAdapter
 
-    val bitrateAdapter: BitrateAdapter get() = when (protocol) {
-        Option.Protocol.Rtmp -> rtmpBitrateAdapter
-        Option.Protocol.Srt -> srtBitrateAdapter
-    }
+    val bitrateAdapter: BitrateAdapter
+        get() = when (protocol) {
+            Option.Protocol.Rtmp -> rtmpBitrateAdapter
+            Option.Protocol.Srt -> srtBitrateAdapter
+        }
     val vBitrate: Int get() = NsaPreferences.bitrateRange.range.lower * 2
     var isPreConfigured: Boolean = false
-    val isStreaming: Boolean get() = if (isPreConfigured) when (protocol) {
-        Option.Protocol.Rtmp -> rtmpStream.isStreaming
-        Option.Protocol.Srt -> srtStream.isStreaming
-    } else false
+    val isStreaming: Boolean
+        get() = if (isPreConfigured) when (protocol) {
+            Option.Protocol.Rtmp -> rtmpStream.isStreaming
+            Option.Protocol.Srt -> srtStream.isStreaming
+        } else false
     val audioEncoder: String get() = NsaPreferences.audioEncoder.mediaFormat
     val videoEncoder: String get() = NsaPreferences.videoEncoder.toString()
     val rtmpLink: String get() = NsaPreferences.rtmpLink.toString()
@@ -97,32 +99,25 @@ object StreamManager {
         service: StreamingService,
     ): Boolean {
         val aBitrate = 128 * 1000
-        when (protocol) {
-            Option.Protocol.Rtmp -> {
-                rtmpStream = RtmpStream(context, service).apply {
-                    getGlInterface().autoHandleOrientation = true
-                    getStreamClient().setBitrateExponentialFactor(0.5f)
-                    getStreamClient().forceIncrementalTs(true)
-                }
-
-                rtmpBitrateAdapter = BitrateAdapter {
-                    rtmpStream.setVideoBitrateOnFly(it)
-                }.apply {
-                    setMaxBitrate(vBitrate + aBitrate)
-                }
+        rtmpStream =
+            RtmpStream(context, service).apply {
+                getGlInterface().autoHandleOrientation = true
+                getStreamClient().setBitrateExponentialFactor(0.5f)
+                getStreamClient().forceIncrementalTs(true)
             }
-
-            Option.Protocol.Srt -> {
-                srtStream = SrtStream(context, service).apply {
-                    getGlInterface().autoHandleOrientation = true
-                    getStreamClient().setBitrateExponentialFactor(0.5f)
-                }
-                srtBitrateAdapter = BitrateAdapter {
-                    rtmpStream.setVideoBitrateOnFly(it)
-                }.apply {
-                    setMaxBitrate(vBitrate + aBitrate)
-                }
-            }
+        srtStream = SrtStream(context, service).apply {
+            getGlInterface().autoHandleOrientation = true
+            getStreamClient().setBitrateExponentialFactor(0.5f)
+        }
+        srtBitrateAdapter = BitrateAdapter {
+            rtmpStream.setVideoBitrateOnFly(it)
+        }.apply {
+            setMaxBitrate(vBitrate + aBitrate)
+        }
+        rtmpBitrateAdapter = BitrateAdapter {
+            rtmpStream.setVideoBitrateOnFly(it)
+        }.apply {
+            setMaxBitrate(vBitrate + aBitrate)
         }
         isPreConfigured = true
         return true
