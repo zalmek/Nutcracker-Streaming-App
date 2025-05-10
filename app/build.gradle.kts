@@ -29,7 +29,7 @@ android {
     signingConfigs {
         create("release") {
             storeFile =
-                file("C:\\Users\\zalmek\\AndroidStudioProjects\\NutcrackerStreamingApp\\nutcracker")
+                file("C:\\Users\\zalmek\\StudioProjects\\Nutcracker-Streaming-App\\nutcracker")
             storePassword =
                 gradleLocalProperties(rootDir, providers).getProperty("keystore_password")
                     .toString()

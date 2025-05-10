@@ -15,7 +15,7 @@ class StreamViewModel :
         return StreamContract.State(
             streamState = if (StreamManager.isStreaming) StreamState.Connected else StreamState.Disconnected,
             cameraIsConfigured = StreamManager.isPreConfigured,
-            currentBitrate = "0",
+            currentBitrate = "0 мб/с",
         )
     }
 
@@ -88,7 +88,10 @@ class StreamViewModel :
 
     private fun toggleStream(streamingService: StreamingService) {
         when (viewState.value.streamState) {
-            StreamState.Connected -> streamingService.stopStream()
+            StreamState.Connected -> {
+                streamingService.stopStream()
+                setState { copy(currentBitrate = "0 мб/с") }
+            }
             StreamState.Connecting -> { }
             StreamState.Failed -> streamingService.startStream(this)
             StreamState.Disconnected -> streamingService.startStream(this)

@@ -26,7 +26,6 @@ class NsaApplication: Application() {
 
     override fun onCreate() {
         super.onCreate()
-
         // 1. Build (or retrieve) a MasterKey using the application context
         val masterKey = MasterKey.Builder(applicationContext)
             .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)

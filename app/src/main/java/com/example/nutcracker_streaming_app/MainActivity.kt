@@ -6,6 +6,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
+import android.view.WindowInsets.Type
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -19,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFontFamilyResolver
 import androidx.compose.ui.text.font.createFontFamilyResolver
+import androidx.core.view.WindowCompat
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -48,10 +50,14 @@ class MainActivity : ComponentActivity() {
     private var streamingService: StreamingService? = null
 
     @OptIn(ExperimentalPermissionsApi::class)
-    @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
+    @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter", "WrongConstant")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        val windowInsetsController = WindowCompat.getInsetsController(window, window.decorView)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            windowInsetsController.hide(Type.systemBars())
+        }
         setContent {
             val handler = CoroutineExceptionHandler { _, throwable ->
                 // process the Throwable
@@ -73,7 +79,6 @@ class MainActivity : ComponentActivity() {
                 }
             }
             val permissionsState = rememberMultiplePermissionsState(permissionsList)
-
             streamingService = rememberStreamingService<StreamingService, StreamingService.LocalBinder> { service }
             LaunchedEffect(streamingService, permissionsState.allPermissionsGranted) {
                 permissionsState.launchMultiplePermissionRequest()
@@ -95,7 +100,7 @@ class MainActivity : ComponentActivity() {
                         .background(Colors.Background.main)
                 ) {
                     if (permissionsState.allPermissionsGranted) {
-                        streamingService?.let { MyAppNavHost(intent = intent, service = it) }
+                        MyAppNavHost(intent = intent, service = streamingService)
                     } else {
                         PermissionScreen(permissionsList, permissionsState)
                     }
@@ -107,7 +112,7 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun MyAppNavHost(
-    service: StreamingService,
+    service: StreamingService?,
     modifier: Modifier = Modifier,
     intent: Intent? = null,
     navController: NavHostController = rememberNavController(),

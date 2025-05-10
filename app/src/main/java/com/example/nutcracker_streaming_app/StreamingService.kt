@@ -98,10 +98,10 @@ class StreamingService : Service(), ConnectChecker {
     }
 
     override fun onNewBitrate(bitrate: Long) {
+        viewModel?.setEvent(StreamContract.Event.OnNewBitrate(String.format(Locale.getDefault(), "%.1f мб/с", bitrate / 1000_000f)))
         if (NsaPreferences.adaptiveBitrateEnabled.enabled) {
             StreamManager.bitrateAdapter.adaptBitrate(bitrate, StreamManager.rtmpStream.getStreamClient().hasCongestion())
         }
-        viewModel?.setEvent(StreamContract.Event.OnNewBitrate(String.format(Locale.getDefault(), "%.1f mb/s", bitrate / 1000_000f)))
     }
 
     override fun onAuthError() {
