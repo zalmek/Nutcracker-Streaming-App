@@ -39,7 +39,7 @@ object StreamManager {
     val bitrateRange: Range<Int> get() = NsaPreferences.bitrateRange.range
 
     fun startStream() {
-        Log.d("ASDKA:LD", "startStream: $rtmpLink") // rtmp://ovsu.okcdn.ru/input/-230186551_518879054_43_jypaxzamuu
+        Log.d("ASDKA:LD", "startStream: $rtmpLink")
         when (protocol) {
             Option.Protocol.Rtmp -> rtmpStream.startStream(rtmpLink)
             Option.Protocol.Srt -> srtStream.startStream(srtLink)
