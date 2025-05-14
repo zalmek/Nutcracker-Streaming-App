@@ -15,6 +15,7 @@ object Fonts {
     private val roboto = GoogleFont("Roboto")
 
     val robotoFamily = FontFamily(
-        Font(googleFont = roboto, fontProvider = provider)
+        Font(googleFont = roboto, fontProvider = provider),
+        androidx.compose.ui.text.font.Font(resId = R.font.roboto_mono_thin)
     )
 }
